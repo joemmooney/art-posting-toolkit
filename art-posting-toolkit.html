@@ -1,0 +1,2254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Art Posting Toolkit</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Art Toolkit">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --ink:#1e1a18;--ink-soft:#4a4440;--ink-faint:#8a7f78;
+  --page:#faf8f5;--page-warm:#f2ede6;--rule:#ddd6cc;
+  --accent:#7b5ea7;--accent-lt:#ede8f5;--accent-dk:#5a4080;
+  --ok:#4a8c6a;--ok-lt:#e6f2ec;--warn:#c07040;--warn-lt:#fdf0e6;
+  --tag-bg:#e8e2f8;--tag-text:#4a3878;
+  --radius:6px;--radius-lg:12px;
+  --header-bg:#1e1a18;--header-text:#faf8f5;
+  --card-bg:#ffffff;--modal-bg:#ffffff;
+}
+
+/* ── Dark mode ── */
+body[data-theme=dark]{
+  --ink:#e8e2d9;--ink-soft:#b0a89e;--ink-faint:#6a6058;
+  --page:#16141a;--page-warm:#1e1b24;--rule:#2e2a38;
+  --accent:#9b7fd4;--accent-lt:#2a2040;--accent-dk:#c4a8f0;
+  --ok:#5aad82;--ok-lt:#0e2a1e;--warn:#d4885a;--warn-lt:#2a1a0a;
+  --tag-bg:#2a2040;--tag-text:#c4a8f0;
+  --header-bg:#0e0c14;--header-text:#e8e2d9;
+  --card-bg:#1e1b24;--modal-bg:#1e1b24;
+}
+
+/* ── Celestial theme ── */
+body[data-theme=celestial]{
+  --ink:#f0e8d0;--ink-soft:#c8b89a;--ink-faint:#7a6e5a;
+  --page:#0d0e1a;--page-warm:#13142a;--rule:#2a2a48;
+  --accent:#c9a84c;--accent-lt:#1e1a08;--accent-dk:#f0d080;
+  --ok:#5aad82;--ok-lt:#0a1e14;--warn:#d4885a;--warn-lt:#2a1a0a;
+  --tag-bg:#1e1a08;--tag-text:#f0d080;
+  --header-bg:#08091a;--header-text:#f0e8d0;
+  --card-bg:#13142a;--modal-bg:#13142a;
+}
+
+/* Apply card and modal bg vars everywhere */
+.card{background:var(--card-bg);}
+.modal-box,.confirm-box{background:var(--modal-bg);}
+.app-header{background:var(--header-bg);color:var(--header-text);}
+.breadcrumb{background:var(--card-bg);}
+input[type=text],input[type=number],input[type=date],textarea,select{background:var(--page-warm);color:var(--ink);}
+input[type=text]:focus,input[type=number]:focus,input[type=date]:focus,textarea:focus,select:focus{background:var(--card-bg);color:var(--ink);}
+
+/* Celestial atmosphere */
+body[data-theme=celestial]{
+  background-image:
+    radial-gradient(ellipse at 20% 20%, rgba(180,140,255,.04) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 70%, rgba(201,168,76,.05) 0%, transparent 55%);
+  background-attachment:fixed;
+}
+body[data-theme=celestial] .app-header{
+  background:linear-gradient(135deg, #08091a 0%, #0f1030 100%);
+  border-bottom:1px solid rgba(201,168,76,.35);
+  position:relative;
+}
+/* Gold rule under header */
+body[data-theme=celestial] .app-header::after{
+  content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(201,168,76,.6) 25%,rgba(201,168,76,.9) 50%,rgba(201,168,76,.6) 75%,transparent);
+}
+body[data-theme=celestial] .nav{
+  border-bottom:1px solid rgba(201,168,76,.2);
+}
+body[data-theme=celestial] .section-title{
+  letter-spacing:.03em;
+  background:linear-gradient(90deg, var(--ink) 60%, #c9a84c);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+body[data-theme=celestial] .card{
+  border-color:rgba(201,168,76,.2);
+}
+body[data-theme=celestial] .lib-card:hover,
+body[data-theme=celestial] .roster-card:hover{
+  border-color:rgba(201,168,76,.5);
+  box-shadow:0 2px 16px rgba(201,168,76,.08);
+}
+body[data-theme=celestial] .nav-btn.active{
+  border-bottom-color:var(--accent);
+}
+/* Corner ornaments — fixed to viewport corners */
+body[data-theme=celestial] .celestial-corner{
+  position:fixed;width:110px;height:110px;pointer-events:none;z-index:9998;opacity:.55;
+}
+body[data-theme=celestial] .celestial-corner.tl{top:0;left:0;}
+body[data-theme=celestial] .celestial-corner.tr{top:0;right:0;transform:scaleX(-1);}
+body[data-theme=celestial] .celestial-corner.bl{bottom:0;left:0;transform:scaleY(-1);}
+body[data-theme=celestial] .celestial-corner.br{bottom:0;right:0;transform:scale(-1,-1);}
+/* Moon phase strip */
+body[data-theme=celestial] .moon-strip{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  padding:7px 0 5px;border-top:1px solid rgba(201,168,76,.2);
+  font-size:16px;opacity:.45;letter-spacing:4px;
+  color:#c9a84c;pointer-events:none;user-select:none;
+}
+.celestial-corner,.moon-strip{display:none;}
+body[data-theme=celestial] .main{position:relative;}
+
+/* Celestial header glyph */
+body[data-theme=celestial] .app-header h1::before{content:'✦ ';font-size:.9em;opacity:.7;}
+body[data-theme=celestial] .app-header h1::after{content:' ☽';font-size:.85em;opacity:.6;}
+
+/* Theme switcher pills */
+.theme-switcher{display:flex;gap:4px;background:rgba(255,255,255,.08);border-radius:20px;padding:3px;}
+.theme-pill{background:none;border:none;border-radius:16px;padding:4px 10px;font:500 11px 'Inter',sans-serif;cursor:pointer;color:var(--header-text);opacity:.55;transition:opacity .15s,background .15s;white-space:nowrap;}
+.theme-pill:hover{opacity:.85;}
+.theme-pill.active{background:rgba(255,255,255,.15);opacity:1;}
+body{font-family:'Inter',sans-serif;background:var(--page);color:var(--ink);min-height:100vh;font-size:14px;line-height:1.5;}
+.app-header{padding:13px 22px;display:flex;align-items:center;gap:12px;}
+.app-header h1{font-family:'Lora',serif;font-size:1.15rem;font-weight:600;flex:1;}
+.header-btns{display:flex;gap:7px;flex-wrap:wrap;}
+.nav{background:var(--page-warm);border-bottom:1px solid var(--rule);display:flex;gap:1px;padding:0 22px;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.nav-btn{background:none;border:none;border-bottom:3px solid transparent;padding:10px 14px;font:500 13px 'Inter',sans-serif;color:var(--ink-faint);cursor:pointer;transition:color .15s,border-color .15s;white-space:nowrap;min-height:44px;}
+.nav-btn:hover{color:var(--ink);}
+.nav-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
+.breadcrumb{border-bottom:1px solid var(--rule);padding:8px 22px;display:none;align-items:center;gap:9px;font-size:13px;flex-wrap:wrap;}
+.breadcrumb.visible{display:flex;}
+.breadcrumb-back{background:none;border:none;color:var(--accent);cursor:pointer;font:500 13px 'Inter',sans-serif;padding:0;min-height:44px;display:flex;align-items:center;}
+.breadcrumb-sep{color:var(--ink-faint);}
+.breadcrumb-title{font-weight:600;color:var(--ink);flex:1;min-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.piece-tabs{background:var(--page);border-bottom:1px solid var(--rule);display:none;gap:1px;padding:0 22px;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.piece-tabs.visible{display:flex;}
+.piece-tab{background:none;border:none;border-bottom:2px solid transparent;padding:8px 13px;font:400 12px 'Inter',sans-serif;color:var(--ink-faint);cursor:pointer;transition:color .15s,border-color .15s;white-space:nowrap;min-height:44px;}
+.piece-tab:hover{color:var(--ink);}
+.piece-tab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:500;}
+.main{padding:22px;max-width:980px;}
+.view{display:none;}.view.active{display:block;}
+.sub-view{display:none;}.sub-view.active{display:block;}
+.section-title{font-family:'Lora',serif;font-size:1.05rem;font-weight:600;color:var(--ink);margin-bottom:3px;}
+.section-sub{font-size:12px;color:var(--ink-faint);margin-bottom:16px;}
+.card{border:1px solid var(--rule);border-radius:var(--radius-lg);padding:16px;margin-bottom:11px;}
+label{display:block;font-size:11px;font-weight:600;color:var(--ink-soft);margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em;}
+input[type=text],input[type=number],input[type=date],textarea,select{width:100%;background:var(--page);border:1px solid var(--rule);border-radius:var(--radius);padding:7px 10px;font:400 13px 'Inter',sans-serif;color:var(--ink);transition:border-color .15s;outline:none;min-height:40px;}
+input[type=text]:focus,input[type=number]:focus,input[type=date]:focus,textarea:focus,select:focus{border-color:var(--accent);background:var(--card-bg);color:var(--ink);}
+textarea{resize:vertical;min-height:78px;}
+.field{margin-bottom:11px;}.field:last-child{margin-bottom:0;}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border-radius:var(--radius);font:500 13px 'Inter',sans-serif;cursor:pointer;border:none;transition:opacity .15s,transform .1s;min-height:40px;}
+.btn:active{transform:scale(.98);}
+.btn-primary{background:var(--accent);color:#fff;}.btn-primary:hover{opacity:.88;}
+.btn-ghost{background:none;border:1px solid var(--rule);color:var(--ink-soft);}.btn-ghost:hover{border-color:var(--accent);color:var(--accent);}
+.btn-danger{background:none;border:1px solid rgba(180,80,80,.5);color:#c05050;}.btn-danger:hover{background:rgba(180,80,80,.08);}
+.btn-ok{background:var(--ok);color:#fff;}.btn-ok:hover{opacity:.88;}
+.btn-sm{padding:4px 10px;font-size:12px;min-height:36px;}
+.row{display:flex;gap:9px;align-items:flex-start;}
+.row.center{align-items:center;}
+.grow{flex:1;}
+.divider{border:none;border-top:1px solid var(--rule);margin:16px 0;}
+.empty{text-align:center;padding:28px 14px;color:var(--ink-faint);font-size:13px;font-style:italic;}
+.tag{display:inline-flex;align-items:center;gap:4px;background:var(--tag-bg);color:var(--tag-text);border-radius:4px;padding:3px 8px;font-size:12px;font-weight:500;}
+.tag .remove{background:none;border:none;cursor:pointer;color:var(--accent);font-size:14px;line-height:1;padding:0;display:flex;align-items:center;}
+.tag-list{display:flex;flex-wrap:wrap;gap:5px;min-height:22px;}
+.output-box{background:var(--page);border:1px solid var(--rule);border-radius:var(--radius);padding:11px;font:400 12px/1.6 monospace;color:var(--ink-soft);white-space:pre-wrap;word-break:break-word;min-height:56px;}
+.copy-row{display:flex;justify-content:flex-end;margin-top:7px;gap:6px;}
+/* Library cards */
+.lib-card{background:var(--card-bg);border:1px solid var(--rule);border-radius:var(--radius-lg);padding:13px 15px;margin-bottom:8px;cursor:pointer;transition:border-color .15s,box-shadow .15s;display:flex;align-items:center;gap:13px;}
+.lib-card:hover{border-color:var(--accent);box-shadow:0 2px 8px rgba(123,94,167,.1);}
+.lib-thumb{width:50px;height:50px;border-radius:var(--radius);object-fit:cover;background:var(--page-warm);flex-shrink:0;border:1px solid var(--rule);}
+.lib-thumb-ph{width:50px;height:50px;border-radius:var(--radius);background:var(--page-warm);flex-shrink:0;border:1px solid var(--rule);display:flex;align-items:center;justify-content:center;color:var(--ink-faint);font-size:18px;}
+.lib-info{flex:1;min-width:0;}
+.lib-title{font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lib-meta{font-size:12px;color:var(--ink-faint);margin-top:2px;}
+/* Status */
+.status-badge{font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;white-space:nowrap;flex-shrink:0;}
+.status-none{background:var(--page-warm);color:var(--ink-faint);}
+.status-draft{background:var(--warn-lt);color:var(--warn);}
+.status-ready{background:var(--accent-lt);color:var(--accent-dk);}
+.status-posted{background:var(--ok-lt);color:var(--ok);}
+/* People / Character roster cards */
+.roster-card{background:var(--card-bg);border:1px solid var(--rule);border-radius:var(--radius-lg);padding:13px 15px;margin-bottom:8px;cursor:pointer;transition:border-color .15s;}
+.roster-card:hover{border-color:var(--accent);}
+.roster-name{font-weight:600;font-size:13px;}
+.roster-meta{font-size:12px;color:var(--ink-faint);margin-top:3px;}
+/* Tag categories */
+.category-card{background:var(--card-bg);border:1px solid var(--rule);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:9px;}
+.category-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--accent-lt);cursor:pointer;user-select:none;}
+.category-header:hover{filter:brightness(.95);}
+.category-name{font-weight:600;font-size:13px;color:var(--accent-dk);}
+.category-count{font-size:11px;color:var(--ink-faint);}
+.category-body{padding:12px 14px;border-top:1px solid var(--rule);}
+.chevron{transition:transform .2s;display:inline-block;}
+.cat-collapsed .chevron{transform:rotate(-90deg);}
+.cat-select-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--page-warm);}
+.cat-select-row:last-child{border-bottom:none;}
+.cat-select-row input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;}
+.cat-select-label{font-size:13px;font-weight:500;color:var(--ink);cursor:pointer;flex:1;}
+.cat-select-count{font-size:11px;color:var(--ink-faint);}
+/* Checklist */
+.checklist-item{display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:1px solid var(--page-warm);}
+.checklist-item:last-child{border-bottom:none;}
+.checklist-item input[type=checkbox]{width:16px;height:16px;margin-top:2px;accent-color:var(--accent);flex-shrink:0;cursor:pointer;}
+.cl-label{font-size:13px;color:var(--ink);cursor:pointer;line-height:1.4;}
+.cl-hint{display:block;color:var(--ink-faint);font-size:11px;margin-top:1px;}
+.checklist-item.done .cl-label{text-decoration:line-through;color:var(--ink-faint);}
+/* Image preview */
+.img-preview{width:100%;max-height:280px;object-fit:contain;border-radius:var(--radius);border:1px solid var(--rule);background:var(--page-warm);display:block;margin-top:9px;}
+/* Library filter bar */
+.filter-bar{background:var(--card-bg);border:1px solid var(--rule);border-radius:var(--radius-lg);padding:14px;margin-bottom:14px;}
+.filter-row{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;}
+.filter-row+.filter-row{margin-top:10px;}
+.filter-group{display:flex;flex-direction:column;gap:4px;min-width:120px;flex:1;}
+.filter-group label{margin-bottom:0;}
+.filter-group select,.filter-group input[type=text]{min-height:36px;font-size:13px;}
+.tag-filter-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;}
+.tag-filter-chip{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--rule);background:var(--page-warm);color:var(--ink-soft);transition:all .15s;}
+.tag-filter-chip.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+.filter-mode-toggle{display:flex;gap:0;border:1px solid var(--rule);border-radius:var(--radius);overflow:hidden;flex-shrink:0;}
+.filter-mode-btn{background:none;border:none;padding:4px 10px;font:500 11px 'Inter',sans-serif;cursor:pointer;color:var(--ink-faint);transition:all .15s;}
+.filter-mode-btn.active{background:var(--accent);color:#fff;}
+.sort-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.sort-label{font-size:11px;font-weight:600;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;}
+/* Site tabs */
+.site-tabs{display:flex;gap:5px;margin-bottom:13px;flex-wrap:wrap;}
+.site-tab{padding:5px 12px;border-radius:20px;font:500 12px 'Inter',sans-serif;cursor:pointer;border:1px solid var(--rule);background:none;color:var(--ink-soft);transition:all .15s;min-height:36px;}
+.site-tab.active{background:var(--accent);color:white;border-color:var(--accent);}
+/* Link entries */
+.link-entry{display:flex;gap:7px;align-items:center;padding:6px 0;border-bottom:1px solid var(--page-warm);}
+.link-entry:last-child{border-bottom:none;}
+.link-entry select{flex:1.2;}
+.link-entry input{flex:1;}
+/* Character selector per piece */
+.char-select-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--page-warm);}
+.char-select-row:last-child{border-bottom:none;}
+.char-select-row input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;}
+.char-select-info{flex:1;}
+.char-select-name{font-size:13px;font-weight:500;color:var(--ink);}
+.char-select-owner{font-size:11px;color:var(--ink-faint);}
+/* Placeholder chips */
+.ph-grid{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+.ph-chip{background:var(--page-warm);border:1px solid var(--rule);border-radius:4px;padding:3px 8px;font:500 11px monospace;color:var(--ink-soft);cursor:pointer;min-height:32px;display:inline-flex;align-items:center;}
+.ph-chip:hover{background:var(--accent-lt);color:var(--accent-dk);}
+/* Expenditure table */
+.exp-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:4px;}
+.exp-table th{text-align:left;padding:6px 8px;border-bottom:2px solid var(--rule);font-weight:600;color:var(--ink-soft);font-size:11px;text-transform:uppercase;letter-spacing:.04em;}
+.exp-table td{padding:6px 8px;border-bottom:1px solid var(--page-warm);vertical-align:top;}
+.exp-table tr:last-child td{border-bottom:none;}
+.exp-bucket-header td{background:var(--accent-lt);font-weight:600;color:var(--accent-dk);font-size:12px;}
+.exp-bucket-header td:last-child{text-align:right;}
+.exp-row-base td{color:var(--ink);}
+.exp-row-extra td{color:var(--ink-soft);}
+.exp-type-pill{font-size:10px;font-weight:600;padding:2px 6px;border-radius:10px;white-space:nowrap;}
+.exp-type-base{background:#e8f0e8;color:#3a6a3a;}
+.exp-type-extra{background:var(--warn-lt);color:var(--warn);}
+.exp-type-tip{background:#e8e8f8;color:#4a4a8a;}
+.exp-amount{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;}
+
+/* Posting tracker */
+.posting-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--page-warm);}
+.posting-row:last-child{border-bottom:none;}
+.posting-site{font-size:13px;font-weight:500;flex:1;}
+.posting-row input[type=checkbox]{width:16px;height:16px;accent-color:var(--ok);cursor:pointer;flex-shrink:0;}
+.posting-row input[type=date]{width:150px;}
+/* Site username rows */
+.site-u-row{display:flex;gap:8px;align-items:center;padding:5px 0;border-bottom:1px solid var(--page-warm);}
+.site-u-row:last-child{border-bottom:none;}
+.site-u-label{font-size:12px;color:var(--ink-soft);width:110px;flex-shrink:0;}
+/* Chart */
+.chart-controls{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px;}
+.chart-controls>div{display:flex;flex-direction:column;gap:3px;}
+.chart-controls select{width:auto;min-width:120px;}
+/* Modals */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.38);z-index:100;align-items:center;justify-content:center;padding:16px;}
+.modal-overlay.open{display:flex;}
+.modal-box{background:var(--modal-bg);border-radius:var(--radius-lg);padding:22px;width:min(600px,100%);max-height:90vh;overflow-y:auto;}
+/* Piece list inside character view */
+.piece-ref{font-size:12px;color:var(--accent);background:var(--accent-lt);padding:3px 9px;border-radius:12px;cursor:pointer;display:inline-flex;align-items:center;}
+.piece-ref:hover{background:var(--accent-lt);filter:brightness(1.1);}
+/* Confirm modal */
+.confirm-box{background:var(--modal-bg);border-radius:var(--radius-lg);padding:22px;width:min(340px,92vw);text-align:center;}
+.confirm-msg{font-size:14px;margin-bottom:16px;line-height:1.5;}
+.confirm-btns{display:flex;gap:10px;justify-content:center;}
+#toast{position:fixed;bottom:18px;right:18px;background:var(--ink);color:var(--page);padding:8px 15px;border-radius:var(--radius);font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:999;}
+#toast.show{opacity:1;}
+#import-input{display:none;}
+
+/* ── Mobile ── */
+@media(max-width:600px){
+  .app-header{padding:11px 14px;}
+  .app-header h1{font-size:.95rem;}
+  .header-btns .btn{padding:5px 8px;font-size:11px;}
+  .nav{padding:0 4px;}
+  .nav-btn{padding:9px 9px;font-size:11px;}
+  .breadcrumb{padding:7px 12px;}
+  .piece-tabs{padding:0 4px;}
+  .piece-tab{padding:7px 9px;font-size:11px;}
+  .main{padding:11px;}
+  .card{padding:12px;}
+  .modal-box{padding:16px 13px;max-height:100vh;border-radius:0;width:100%;}
+  .modal-overlay{padding:0;align-items:flex-end;}
+  input[type=text],input[type=number],input[type=date],textarea,select{font-size:16px;}
+  .row{flex-wrap:wrap;}
+  .row>*{min-width:0;}
+  .link-entry{flex-wrap:wrap;}
+  .link-entry select,.link-entry input{width:100%;}
+  .chart-controls>div{width:100%;}
+  .chart-controls select{width:100%;}
+  .posting-row{flex-wrap:wrap;}
+  .posting-row input[type=date]{width:100%;margin-top:4px;}
+  .exp-item{flex-wrap:wrap;}
+  .site-u-row{flex-wrap:wrap;}
+  .site-u-label{width:100%;}
+}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <h1>Art Posting Toolkit</h1>
+  <div class="theme-switcher">
+    <button class="theme-pill" id="theme-light"     onclick="setTheme('light')">Light</button>
+    <button class="theme-pill" id="theme-dark"      onclick="setTheme('dark')">Dark</button>
+    <button class="theme-pill" id="theme-celestial" onclick="setTheme('celestial')">✦ Celestial</button>
+  </div>
+  <div class="header-btns">
+    <button class="btn btn-ghost btn-sm" onclick="exportData()">Export</button>
+    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('import-input').click()">Import</button>
+    <input type="file" id="import-input" accept=".json" onchange="importData(event)">
+  </div>
+</header>
+
+<nav class="nav">
+  <button class="nav-btn active" id="nav-library"     onclick="showView('library')">Art Library</button>
+  <button class="nav-btn"        id="nav-people"      onclick="showView('people')">People</button>
+  <button class="nav-btn"        id="nav-characters"  onclick="showView('characters')">Characters</button>
+  <button class="nav-btn"        id="nav-sites"       onclick="showView('sites')">Sites</button>
+  <button class="nav-btn"        id="nav-tags"        onclick="showView('tags')">Tag Categories</button>
+  <button class="nav-btn"        id="nav-expenditure" onclick="showView('expenditure')">Expenditure</button>
+</nav>
+
+<div class="breadcrumb" id="breadcrumb">
+  <button class="breadcrumb-back" onclick="showView('library')">← Library</button>
+  <span class="breadcrumb-sep">/</span>
+  <span class="breadcrumb-title" id="breadcrumb-title"></span>
+  <div class="grow"></div>
+  <select id="piece-status-select" style="width:auto;min-width:130px" onchange="setPieceStatus(this.value)">
+    <option value="none">Not Started</option>
+    <option value="draft">Draft in Progress</option>
+    <option value="ready">Ready to Post</option>
+    <option value="posted">Fully Posted</option>
+  </select>
+</div>
+<div class="piece-tabs" id="piece-tabs">
+  <button class="piece-tab active" id="ptab-info"      onclick="showPieceTab('info')">Info &amp; Image</button>
+  <button class="piece-tab"        id="ptab-tags"      onclick="showPieceTab('tags')">Tags</button>
+  <button class="piece-tab"        id="ptab-cost"      onclick="showPieceTab('cost')">Cost</button>
+  <button class="piece-tab"        id="ptab-formatter" onclick="showPieceTab('formatter')">Formatter</button>
+  <button class="piece-tab"        id="ptab-posting"   onclick="showPieceTab('posting')">Posting</button>
+</div>
+
+<div class="main">
+
+<!-- ══ ART LIBRARY ══ -->
+<div id="view-library" class="view active">
+  <div class="section-title">Art Library</div>
+  <div class="section-sub">Your collection. Click any piece to open its workspace.</div>
+  <!-- Add piece -->
+  <div class="card">
+    <div class="row" style="flex-wrap:wrap;gap:10px">
+      <div class="grow field" style="margin-bottom:0"><label>Working Title</label><input type="text" id="q-title" placeholder="Something to identify the piece"></div>
+      <div class="grow field" style="margin-bottom:0"><label>Artist</label>
+        <select id="q-person-id"><option value="">— pick person —</option></select>
+      </div>
+    </div>
+    <div style="margin-top:10px"><button class="btn btn-primary" onclick="addPiece()">+ Add Piece</button></div>
+  </div>
+  <!-- Filter & sort bar -->
+  <div class="filter-bar">
+    <div class="filter-row">
+      <div class="filter-group" style="flex:2;min-width:160px">
+        <label>Search</label>
+        <input type="text" id="lib-search" placeholder="Title or artist…" oninput="renderLibrary()">
+      </div>
+      <div class="filter-group">
+        <label>Status</label>
+        <select id="lib-status" onchange="renderLibrary()">
+          <option value="">All statuses</option>
+          <option value="none">Not Started</option>
+          <option value="draft">Draft</option>
+          <option value="ready">Ready</option>
+          <option value="posted">Fully Posted</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Artist</label>
+        <select id="lib-artist" onchange="renderLibrary()"><option value="">All artists</option></select>
+      </div>
+      <div class="filter-group">
+        <label>Character</label>
+        <select id="lib-char" onchange="renderLibrary()"><option value="">All characters</option></select>
+      </div>
+    </div>
+    <div class="filter-row">
+      <div class="filter-group">
+        <label>Posted to Site</label>
+        <select id="lib-site-posted" onchange="renderLibrary()"><option value="">Any</option></select>
+      </div>
+      <div class="filter-group">
+        <label>Not Posted to Site</label>
+        <select id="lib-site-not-posted" onchange="renderLibrary()"><option value="">Any</option></select>
+      </div>
+      <div class="filter-group" style="flex:2;min-width:160px">
+        <div class="row center" style="gap:8px;margin-bottom:4px">
+          <label style="margin-bottom:0;flex:1">Tags</label>
+          <div class="filter-mode-toggle">
+            <button class="filter-mode-btn active" id="tag-mode-or"  onclick="setTagMode('or')">OR</button>
+            <button class="filter-mode-btn"        id="tag-mode-and" onclick="setTagMode('and')">AND</button>
+          </div>
+        </div>
+        <select id="lib-tag-select" onchange="addTagFilter(this.value);this.value=''">
+          <option value="">Add tag filter…</option>
+        </select>
+        <div class="tag-filter-chips" id="lib-tag-chips"></div>
+      </div>
+    </div>
+    <div class="sort-row" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--rule)">
+      <span class="sort-label">Sort by</span>
+      <select id="lib-sort-field" onchange="renderLibrary()" style="width:auto;min-width:160px;min-height:32px;font-size:12px;">
+        <option value="default">Default (added order)</option>
+        <option value="title-az">Title A→Z</option>
+        <option value="title-za">Title Z→A</option>
+        <option value="artist-az">Artist A→Z</option>
+        <option value="date-commissioned-new">Date Commissioned (newest)</option>
+        <option value="date-commissioned-old">Date Commissioned (oldest)</option>
+        <option value="date-delivered-new">Date Delivered (newest)</option>
+        <option value="date-delivered-old">Date Delivered (oldest)</option>
+        <option value="cost-high">Total Cost (high→low)</option>
+        <option value="cost-low">Total Cost (low→high)</option>
+        <option value="status">Status (workflow order)</option>
+      </select>
+      <button class="btn btn-ghost btn-sm" onclick="clearLibraryFilters()" style="margin-left:auto">Clear All</button>
+    </div>
+  </div>
+  <div id="lib-result-count" style="font-size:12px;color:var(--ink-faint);margin-bottom:10px"></div>
+  <div id="library-list"></div>
+</div>
+
+<!-- ══ PEOPLE ══ -->
+<div id="view-people" class="view">
+  <div class="section-title">People</div>
+  <div class="section-sub">Artists, character owners, and anyone else you want to credit. Link sites are managed below.</div>
+  <!-- Link sites manager -->
+  <div class="card" style="background:var(--page-warm)">
+    <div class="row center" style="margin-bottom:9px">
+      <span style="font-weight:600;font-size:13px;flex:1">Link Sites</span>
+      <span style="font-size:11px;color:var(--ink-faint)">Sites you can attach links to on people</span>
+    </div>
+    <div id="link-sites-list" style="margin-bottom:9px"></div>
+    <div class="row" style="gap:7px">
+      <input type="text" id="new-link-site" placeholder="e.g. Bluesky, Carrd, Website…" class="grow" onkeydown="if(event.key==='Enter')addLinkSite()">
+      <button class="btn btn-ghost btn-sm" onclick="addLinkSite()">+ Add</button>
+    </div>
+  </div>
+  <!-- Add person -->
+  <div class="card">
+    <div class="field"><label>Name</label><input type="text" id="p-name" placeholder="Display name"></div>
+    <div style="margin-top:4px"><button class="btn btn-primary" onclick="addPerson()">+ Add Person</button></div>
+  </div>
+  <div id="people-list"></div>
+</div>
+
+<!-- ══ CHARACTERS ══ -->
+<div id="view-characters" class="view">
+  <div class="section-title">Characters</div>
+  <div class="section-sub">Add characters here, then select them per piece. Their tags auto-populate into the piece's tag list.</div>
+  <div class="card">
+    <div class="row" style="flex-wrap:wrap;gap:10px">
+      <div class="grow field" style="margin-bottom:0"><label>Character Name</label><input type="text" id="c-name" placeholder="Name"></div>
+      <div class="grow field" style="margin-bottom:0"><label>Owner</label>
+        <select id="c-owner-id"><option value="">— pick person —</option></select>
+      </div>
+    </div>
+    <div style="margin-top:10px"><button class="btn btn-primary" onclick="addCharacter()">+ Add Character</button></div>
+  </div>
+  <div id="character-list"></div>
+</div>
+
+<!-- ══ SITES ══ -->
+<div id="view-sites" class="view">
+  <div class="section-title">Sites</div>
+  <div class="section-sub">Define each site you post to and write its template. Edit a site to access placeholders and set up formatting.</div>
+  <div class="card">
+    <div class="field" style="margin-bottom:0"><label>Site Name</label>
+      <div class="row" style="gap:7px">
+        <input type="text" id="s-name" placeholder="e.g. DeviantArt, Telegram…" class="grow" onkeydown="if(event.key==='Enter')addSite()">
+        <button class="btn btn-primary" onclick="addSite()">+ Add Site</button>
+      </div>
+    </div>
+  </div>
+  <div id="site-list"></div>
+</div>
+
+<!-- ══ TAG CATEGORIES ══ -->
+<div id="view-tags" class="view">
+  <div class="section-title">Tag Categories</div>
+  <div class="section-sub">Build reusable tag groups; select which apply per piece.</div>
+  <div class="card">
+    <label>New Category</label>
+    <div class="row" style="gap:7px">
+      <input type="text" id="new-cat-name" placeholder="e.g. Fantasy Setting, Warm Colors…" class="grow" onkeydown="if(event.key==='Enter')addCategory()">
+      <button class="btn btn-primary" onclick="addCategory()">+ Add</button>
+    </div>
+  </div>
+  <div id="category-list"></div>
+</div>
+
+<!-- ══ EXPENDITURE ══ -->
+<div id="view-expenditure" class="view">
+  <div class="section-title">Expenditure</div>
+  <div class="section-sub">Costs are entered per piece in the Cost tab.</div>
+  <div class="card">
+    <div class="chart-controls">
+      <div><label>Group by</label><select id="exp-group" onchange="renderChart()"><option value="week">Weekly</option><option value="month" selected>Monthly</option><option value="year">Yearly</option></select></div>
+      <div><label>Time range</label><select id="exp-range" onchange="renderChart()"><option value="1m">Past month</option><option value="3m">Past 3 months</option><option value="6m">Past 6 months</option><option value="12m" selected>Past 12 months</option><option value="2y">Past 2 years</option><option value="all">All time</option></select></div>
+      <div><label>Filter by Artist</label><select id="exp-person" onchange="renderChart()"><option value="">All artists</option></select></div>
+      <div><label>Filter by Character</label><select id="exp-char" onchange="renderChart()"><option value="">All characters</option></select></div>
+    </div>
+    <canvas id="chart-canvas" height="260"></canvas>
+    <div id="chart-legend" style="display:flex;gap:16px;justify-content:center;margin-top:10px;font-size:12px;"></div>
+  </div>
+  <div class="card"><div id="exp-summary" style="font-size:13px;"></div></div>
+  <div class="card" style="overflow-x:auto">
+    <div class="row center" style="margin-bottom:10px">
+      <span style="font-weight:600;font-size:13px;flex:1">Itemized Breakdown</span>
+    </div>
+    <table class="exp-table" id="exp-table">
+      <thead><tr><th>Period</th><th>Label</th><th>Piece</th><th>Artist</th><th>Characters</th><th class="exp-amount">Amount</th></tr></thead>
+      <tbody id="exp-table-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══ PIECE WORKSPACE ══ -->
+<div id="view-piece" class="view">
+
+  <!-- Info & Image -->
+  <div id="sub-info" class="sub-view active">
+    <div class="section-title">Piece Info</div>
+    <div class="section-sub">Core details. Picking a person auto-fills the artist name.</div>
+    <!-- Titles & dates -->
+    <div class="card">
+      <div class="field"><label>Working Title</label><input type="text" id="pi-title" oninput="savePF('title',this.value)"></div>
+      <div class="field" style="margin-bottom:0"><label>Final Post Title</label><input type="text" id="pi-post-title" placeholder="Title you'll use when posting" oninput="savePF('postTitle',this.value)"></div>
+    </div>
+    <!-- Artist -->
+    <div class="card">
+      <div class="field"><label>Artist</label>
+        <select id="pi-person-id" onchange="applyPersonToPiece(this.value)"><option value="">— pick person —</option></select>
+      </div>
+      <div class="field" style="margin-bottom:0"><label>Artist Name (override)</label><input type="text" id="pi-artist-name" oninput="savePF('artistName',this.value)"></div>
+    </div>
+    <!-- Dates & links -->
+    <div class="card">
+      <div class="row" style="gap:11px;flex-wrap:wrap">
+        <div class="grow field"><label>Date Commissioned</label><input type="date" id="pi-date-commissioned" oninput="savePF('dateCommissioned',this.value)"></div>
+        <div class="grow field"><label>Date Delivered</label><input type="date" id="pi-date-delivered" oninput="savePF('dateDelivered',this.value)"></div>
+      </div>
+      <div class="field"><label>Original Post URL</label><input type="text" id="pi-orig-url" oninput="savePF('origUrl',this.value)"></div>
+      <div class="field" style="margin-bottom:0">
+        <label>Dropbox Image Link</label>
+        <input type="text" id="pi-dropbox" placeholder="Paste Dropbox share link" oninput="savePF('dropbox',this.value);updateImagePreview()">
+        <div id="img-preview-wrap" style="display:none;margin-top:9px">
+          <img id="img-preview" class="img-preview" alt="Preview" onerror="document.getElementById('img-preview-err').style.display='block';this.style.display='none'">
+          <div id="img-preview-err" style="display:none;font-size:12px;color:var(--warn);margin-top:6px">Could not load image — make sure the Dropbox link is set to "Anyone with link can view".</div>
+        </div>
+      </div>
+    </div>
+    <!-- Characters on this piece -->
+    <div class="card">
+      <div class="row center" style="margin-bottom:10px">
+        <span style="font-weight:600;font-size:13px;flex:1">Characters in This Piece</span>
+      </div>
+      <div id="pi-char-selector"></div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;margin-top:4px">
+      <button class="btn btn-danger btn-sm" onclick="deletePiece()">Delete piece</button>
+    </div>
+  </div>
+
+  <!-- Tags -->
+  <div id="sub-tags" class="sub-view">
+    <div class="section-title">Tags</div>
+    <div class="section-sub">Character tags are auto-added when you select characters. Pick additional categories and add one-offs below.</div>
+    <!-- Character-sourced tags (read-only display) -->
+    <div class="card">
+      <label>From Characters</label>
+      <div class="tag-list" id="char-sourced-tags" style="margin-top:6px">
+        <span style="font-size:12px;color:var(--ink-faint);font-style:italic">Add characters in Info &amp; Image to see their tags here.</span>
+      </div>
+    </div>
+    <div class="card" id="piece-cat-selector"></div>
+    <div class="field">
+      <label>One-off tags</label>
+      <div class="row" style="gap:7px">
+        <input type="text" id="extra-tag-inp" class="grow" placeholder="Tag and press Enter" onkeydown="if(event.key==='Enter')addExtraTag()">
+        <button class="btn btn-ghost btn-sm" onclick="addExtraTag()">+ Add</button>
+      </div>
+      <div class="tag-list" id="extra-tags-list" style="margin-top:7px"></div>
+    </div>
+    <hr class="divider">
+    <div class="section-title" style="font-size:.9rem">All Tags for This Piece</div>
+    <div class="tag-list" id="piece-tag-preview" style="margin:7px 0 9px"></div>
+    <div class="output-box" id="piece-tag-output">Select categories above.</div>
+    <div class="copy-row"><button class="btn btn-ghost btn-sm" onclick="copyText('piece-tag-output')">Copy tags</button></div>
+  </div>
+
+  <!-- Cost -->
+  <div id="sub-cost" class="sub-view">
+    <div class="section-title">Cost Tracking</div>
+    <div class="section-sub">All amounts in USD.</div>
+    <div class="card">
+      <div class="row" style="gap:10px;flex-wrap:wrap">
+        <div class="grow field" style="margin-bottom:0"><label>Base Price (USD)</label><input type="number" id="cost-base" min="0" step="0.01" placeholder="0.00" oninput="savePF('costBase',parseFloat(this.value)||0);updateCostTotal()"></div>
+        <div class="grow field" style="margin-bottom:0"><label>Date of Payment</label><input type="date" id="cost-base-date" oninput="savePF('costBaseDate',this.value)"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="row center" style="margin-bottom:10px">
+        <span style="font-weight:600;font-size:13px;flex:1">Additional Costs</span>
+        <button class="btn btn-ghost btn-sm" onclick="addCostItem()">+ Add cost</button>
+      </div>
+      <div id="cost-extras"></div>
+    </div>
+    <div class="card">
+      <div class="row" style="gap:10px;flex-wrap:wrap">
+        <div class="grow field" style="margin-bottom:0"><label>Tip (USD)</label><input type="number" id="cost-tip" min="0" step="0.01" placeholder="0.00" oninput="savePF('costTip',parseFloat(this.value)||0);updateCostTotal()"></div>
+        <div class="grow field" style="margin-bottom:0"><label>Date Tipped</label><input type="date" id="cost-tip-date" oninput="savePF('costTipDate',this.value)"></div>
+      </div>
+    </div>
+    <div class="card" style="background:var(--page-warm)">
+      <div id="cost-total-display" style="font-size:13px;"></div>
+    </div>
+  </div>
+
+  <!-- Formatter -->
+  <div id="sub-formatter" class="sub-view">
+    <div class="section-title">Post Formatter</div>
+    <div class="section-sub">Rendered output per site, ready to copy.</div>
+    <div class="card">
+      <div class="field"><label>Summary</label><input type="text" id="pi-summary" placeholder="One-line description or tagline" oninput="savePF('summary',this.value);buildFormat()"></div>
+      <div class="field"><label>Description</label><textarea id="pi-desc" placeholder="Your prose, story, or scene description…" oninput="savePF('desc',this.value);buildFormat()"></textarea></div>
+      <div class="field" style="margin-bottom:0"><label>Artist Notes</label><textarea id="pi-artist-notes" placeholder="How the commission went…" style="min-height:65px" oninput="savePF('artistNotes',this.value);buildFormat()"></textarea></div>
+    </div>
+    <div class="site-tabs" id="formatter-site-tabs"></div>
+    <div class="output-box" id="formatter-output">Select a site tab above.</div>
+    <div class="copy-row"><button class="btn btn-ghost btn-sm" onclick="copyText('formatter-output')">Copy</button></div>
+    <!-- Per-site override -->
+    <div id="override-section" style="display:none;margin-top:16px">
+      <hr class="divider" style="margin-top:0">
+      <div class="row center" style="margin-bottom:12px;gap:10px;flex-wrap:wrap">
+        <span style="font-weight:600;font-size:13px;flex:1">Template Overrides <span style="font-size:11px;font-weight:400;color:var(--ink-faint)">for this piece only</span></span>
+      </div>
+      <!-- Post template override -->
+      <div class="card" style="margin-bottom:10px">
+        <div class="row center" style="margin-bottom:10px;gap:10px">
+          <label style="margin-bottom:0;flex:1;text-transform:none;letter-spacing:0;font-size:13px;font-weight:600">Override post template</label>
+          <input type="checkbox" id="override-post-chk" style="width:16px;height:16px;accent-color:var(--accent)" onchange="toggleOverride('post')">
+        </div>
+        <div id="override-post-body" style="display:none">
+          <div class="card" style="background:var(--page-warm);margin-bottom:10px">
+            <label style="margin-bottom:6px">Placeholders — click to copy</label>
+            <div class="ph-grid" id="override-ph-post"></div>
+            <p style="font-size:11px;color:var(--ink-faint);margin-top:6px">Artist links: <code>&#123;Artist.<b>SiteName</b>.URL&#125;</code> · <code>&#123;Artist.<b>SiteName</b>.Username&#125;</code></p>
+          </div>
+          <textarea id="override-post-tpl" style="min-height:160px;font-family:monospace;font-size:12px;" placeholder="Custom post template for this piece…" oninput="saveOverride('post',this.value);buildFormat()"></textarea>
+        </div>
+      </div>
+      <!-- Char template override -->
+      <div class="card">
+        <div class="row center" style="margin-bottom:10px;gap:10px">
+          <label style="margin-bottom:0;text-transform:none;letter-spacing:0;font-size:13px;font-weight:600;flex:1">Override character line template</label>
+          <input type="checkbox" id="override-char-chk" style="width:16px;height:16px;accent-color:var(--accent)" onchange="toggleOverride('char')">
+        </div>
+        <div id="override-char-body" style="display:none">
+          <div class="card" style="background:var(--page-warm);margin-bottom:10px">
+            <label style="margin-bottom:6px">Character line placeholders</label>
+            <div class="ph-grid">
+              <span class="ph-chip" onclick="copyRaw('{Character.Name}')">&#123;Character.Name&#125;</span>
+              <span class="ph-chip" onclick="copyRaw('{Character.Owner.Name}')">&#123;Character.Owner.Name&#125;</span>
+              <span class="ph-chip" onclick="copyRaw('{Character.Owner.SiteName.URL}')">&#123;Character.Owner.SiteName.URL&#125;</span>
+              <span class="ph-chip" onclick="copyRaw('{Character.Owner.SiteName.Username}')">&#123;Character.Owner.SiteName.Username&#125;</span>
+            </div>
+          </div>
+          <textarea id="override-char-tpl" style="min-height:60px;font-family:monospace;font-size:12px;" placeholder="Custom character line for this piece…" oninput="saveOverride('char',this.value);buildFormat()"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Posting -->
+  <div id="sub-posting" class="sub-view">
+    <div class="section-title">Posting Tracker</div>
+    <div class="section-sub">Mark where and when you've posted this piece.</div>
+    <div class="card" id="posting-tracker-rows"></div>
+  </div>
+
+
+</div><!-- /view-piece -->
+</div><!-- /main -->
+
+<!-- ══ PERSON MODAL ══ -->
+<div class="modal-overlay" id="person-modal">
+  <div class="modal-box">
+    <div class="row center" style="margin-bottom:14px">
+      <div class="section-title grow" style="margin-bottom:0">Edit Person</div>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('person-modal')">✕</button>
+    </div>
+    <div class="field"><label>Name</label><input type="text" id="pm-name"></div>
+    <div class="field"><label>Notes</label><textarea id="pm-notes" style="min-height:55px"></textarea></div>
+    <div class="field" style="margin-bottom:0">
+      <label>Links</label>
+      <div id="pm-links" style="margin-top:6px"></div>
+      <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="addPersonLink()">+ Add link</button>
+    </div>
+    <div class="row" style="gap:8px;justify-content:space-between;margin-top:16px">
+      <button class="btn btn-danger btn-sm" onclick="deletePerson()">Delete</button>
+      <button class="btn btn-ok btn-sm" onclick="savePersonModal()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CHARACTER MODAL ══ -->
+<div class="modal-overlay" id="char-modal">
+  <div class="modal-box">
+    <div class="row center" style="margin-bottom:14px">
+      <div class="section-title grow" style="margin-bottom:0">Edit Character</div>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('char-modal')">✕</button>
+    </div>
+    <div class="field"><label>Name</label><input type="text" id="cm-name"></div>
+    <div class="field"><label>Owner</label>
+      <select id="cm-owner-id"><option value="">— no owner —</option></select>
+    </div>
+    <div class="field">
+      <label>Tags</label>
+      <div class="row" style="gap:7px">
+        <input type="text" id="cm-tag-inp" class="grow" placeholder="Add tag and press Enter" onkeydown="if(event.key==='Enter')addCharTag()">
+        <button class="btn btn-ghost btn-sm" onclick="addCharTag()">+ Add</button>
+      </div>
+      <div class="tag-list" id="cm-tags" style="margin-top:7px"></div>
+    </div>
+    <div class="field" style="margin-bottom:0">
+      <label>Pieces featuring this character</label>
+      <div id="cm-pieces" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px"></div>
+    </div>
+    <div class="row" style="gap:8px;justify-content:space-between;margin-top:16px">
+      <button class="btn btn-danger btn-sm" onclick="deleteCharacter()">Delete</button>
+      <button class="btn btn-ok btn-sm" onclick="saveCharModal()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SITE MODAL ══ -->
+<div class="modal-overlay" id="site-modal">
+  <div class="modal-box">
+    <div class="row center" style="margin-bottom:14px">
+      <div class="section-title grow" style="margin-bottom:0">Edit Site</div>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('site-modal')">✕</button>
+    </div>
+    <div class="field"><label>Site Name</label><input type="text" id="sm-name"></div>
+    <!-- Placeholder reference -->
+    <div class="card" style="background:var(--page-warm);margin-bottom:12px">
+      <label style="margin-bottom:6px">Placeholders — click to copy</label>
+      <div class="ph-grid">
+        <span class="ph-chip" onclick="copyRaw('{Title}')">&#123;Title&#125;</span>
+        <span class="ph-chip" onclick="copyRaw('{Summary}')">&#123;Summary&#125;</span>
+        <span class="ph-chip" onclick="copyRaw('{Description}')">&#123;Description&#125;</span>
+        <span class="ph-chip" onclick="copyRaw('{ArtistNotes}')">&#123;ArtistNotes&#125;</span>
+        <span class="ph-chip" onclick="copyRaw('{Tags}')">&#123;Tags&#125;</span>
+        <span class="ph-chip" onclick="copyRaw('{Characters}')">&#123;Characters&#125;</span>
+        <span class="ph-chip" onclick="copyRaw('{Artist.Name}')">&#123;Artist.Name&#125;</span>
+      </div>
+      <p style="font-size:11px;color:var(--ink-faint);margin-top:6px">Artist links: <code>&#123;Artist.<b>SiteName</b>.URL&#125;</code> · <code>&#123;Artist.<b>SiteName</b>.Username&#125;</code></p>
+      <p style="font-size:11px;color:var(--ink-faint);margin-top:3px">Character line: <code>&#123;Character.Name&#125;</code> · <code>&#123;Character.Owner.Name&#125;</code> · <code>&#123;Character.Owner.<b>SiteName</b>.URL&#125;</code></p>
+    </div>
+    <div class="field">
+      <label>Post Template</label>
+      <textarea id="sm-template" style="min-height:180px;font-family:monospace;font-size:12px;" placeholder="Write in this site's native formatting. Use {Placeholder} for piece data.&#10;&#10;Example:&#10;[h1]{Title}[/h1]&#10;&#10;{Description}&#10;&#10;Artist: {Artist.Name} — {Artist.Bluesky.URL}&#10;&#10;{Characters}"></textarea>
+    </div>
+    <div class="field" style="margin-bottom:0">
+      <label>Character Line Template</label>
+      <textarea id="sm-char-template" style="min-height:60px;font-family:monospace;font-size:12px;" placeholder="Template for each character line. E.g.:&#10;{Character.Name} (owned by {Character.Owner.Name})"></textarea>
+      <p style="font-size:11px;color:var(--ink-faint);margin-top:5px">Each character in the piece is rendered through this, joined by newlines, then inserted at <code>&#123;Characters&#125;</code>.</p>
+    </div>
+    <div class="row" style="gap:8px;justify-content:space-between;margin-top:16px">
+      <button class="btn btn-danger btn-sm" onclick="deleteSite()">Delete</button>
+      <button class="btn btn-ok btn-sm" onclick="saveSiteModal()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ INPUT MODAL ══ -->
+<div class="modal-overlay" id="input-modal">
+  <div class="confirm-box">
+    <div class="confirm-msg" id="input-modal-label" style="margin-bottom:10px"></div>
+    <input type="text" id="input-modal-field" style="margin-bottom:14px">
+    <div class="confirm-btns">
+      <button class="btn btn-ghost btn-sm" onclick="inputResolve(null)">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="inputResolve(document.getElementById('input-modal-field').value)">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CONFIRM MODAL ══ -->
+<div class="modal-overlay" id="confirm-modal">
+  <div class="confirm-box">
+    <div class="confirm-msg" id="confirm-msg"></div>
+    <div class="confirm-btns">
+      <button class="btn btn-ghost btn-sm" onclick="confirmResolve(false)">Cancel</button>
+      <button class="btn btn-danger btn-sm" id="confirm-ok-btn" onclick="confirmResolve(true)">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- Celestial corner ornaments (shown only in celestial theme via CSS) -->
+<div class="celestial-corner tl" id="cel-corner-tl">
+<svg viewBox="0 0 110 110" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#c9a84c" stroke-width="1">
+  <!-- border lines -->
+  <line x1="2" y1="2" x2="60" y2="2"/>
+  <line x1="2" y1="2" x2="2" y2="60"/>
+  <!-- inner corner arc -->
+  <path d="M18 2 Q2 2 2 18" stroke-width="1"/>
+  <!-- decorative tick marks on border -->
+  <line x1="25" y1="2" x2="25" y2="7"/><line x1="40" y1="2" x2="40" y2="5"/>
+  <line x1="2" y1="25" x2="7" y2="25"/><line x1="2" y1="40" x2="5" y2="40"/>
+  <!-- crescent moon -->
+  <path d="M30 28 Q22 35 30 42 Q18 40 18 35 Q18 28 30 28Z"/>
+  <!-- star burst at corner -->
+  <line x1="10" y1="10" x2="10" y2="6"/><line x1="10" y1="10" x2="10" y2="14"/>
+  <line x1="10" y1="10" x2="6"  y2="10"/><line x1="10" y1="10" x2="14" y2="10"/>
+  <line x1="10" y1="10" x2="7.5" y2="7.5"/><line x1="10" y1="10" x2="12.5" y2="12.5"/>
+  <line x1="10" y1="10" x2="12.5" y2="7.5"/><line x1="10" y1="10" x2="7.5" y2="12.5"/>
+  <!-- constellation dots and lines -->
+  <circle cx="48" cy="20" r="1.5" fill="#c9a84c" stroke="none"/>
+  <circle cx="56" cy="30" r="1"   fill="#c9a84c" stroke="none"/>
+  <circle cx="42" cy="35" r="1.5" fill="#c9a84c" stroke="none"/>
+  <circle cx="52" cy="48" r="1"   fill="#c9a84c" stroke="none"/>
+  <circle cx="20" cy="52" r="1.5" fill="#c9a84c" stroke="none"/>
+  <circle cx="35" cy="58" r="1"   fill="#c9a84c" stroke="none"/>
+  <line x1="48" y1="20" x2="56" y2="30" stroke-width=".6" opacity=".6"/>
+  <line x1="56" y1="30" x2="42" y2="35" stroke-width=".6" opacity=".6"/>
+  <line x1="42" y1="35" x2="52" y2="48" stroke-width=".6" opacity=".6"/>
+  <line x1="20" y1="52" x2="35" y2="58" stroke-width=".6" opacity=".6"/>
+  <!-- small four-point star -->
+  <path d="M55 14 L56.2 17 L59 18 L56.2 19 L55 22 L53.8 19 L51 18 L53.8 17Z" fill="#c9a84c" stroke="none" opacity=".8"/>
+</svg>
+</div>
+<div class="celestial-corner tr" id="cel-corner-tr">
+<svg viewBox="0 0 110 110" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#c9a84c" stroke-width="1">
+  <line x1="2" y1="2" x2="60" y2="2"/>
+  <line x1="2" y1="2" x2="2" y2="60"/>
+  <path d="M18 2 Q2 2 2 18"/>
+  <line x1="25" y1="2" x2="25" y2="7"/><line x1="40" y1="2" x2="40" y2="5"/>
+  <line x1="2" y1="25" x2="7" y2="25"/><line x1="2" y1="40" x2="5" y2="40"/>
+  <path d="M30 28 Q22 35 30 42 Q18 40 18 35 Q18 28 30 28Z"/>
+  <line x1="10" y1="10" x2="10" y2="6"/><line x1="10" y1="10" x2="10" y2="14"/>
+  <line x1="10" y1="10" x2="6"  y2="10"/><line x1="10" y1="10" x2="14" y2="10"/>
+  <line x1="10" y1="10" x2="7.5" y2="7.5"/><line x1="10" y1="10" x2="12.5" y2="12.5"/>
+  <line x1="10" y1="10" x2="12.5" y2="7.5"/><line x1="10" y1="10" x2="7.5" y2="12.5"/>
+  <circle cx="48" cy="20" r="1.5" fill="#c9a84c" stroke="none"/>
+  <circle cx="56" cy="30" r="1"   fill="#c9a84c" stroke="none"/>
+  <circle cx="42" cy="35" r="1.5" fill="#c9a84c" stroke="none"/>
+  <circle cx="52" cy="48" r="1"   fill="#c9a84c" stroke="none"/>
+  <circle cx="20" cy="52" r="1.5" fill="#c9a84c" stroke="none"/>
+  <circle cx="35" cy="58" r="1"   fill="#c9a84c" stroke="none"/>
+  <line x1="48" y1="20" x2="56" y2="30" stroke-width=".6" opacity=".6"/>
+  <line x1="56" y1="30" x2="42" y2="35" stroke-width=".6" opacity=".6"/>
+  <line x1="42" y1="35" x2="52" y2="48" stroke-width=".6" opacity=".6"/>
+  <line x1="20" y1="52" x2="35" y2="58" stroke-width=".6" opacity=".6"/>
+  <path d="M55 14 L56.2 17 L59 18 L56.2 19 L55 22 L53.8 19 L51 18 L53.8 17Z" fill="#c9a84c" stroke="none" opacity=".8"/>
+</svg>
+</div>
+<div class="celestial-corner bl" id="cel-corner-bl">
+<svg viewBox="0 0 110 110" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#c9a84c" stroke-width="1">
+  <line x1="2" y1="2" x2="60" y2="2"/>
+  <line x1="2" y1="2" x2="2" y2="60"/>
+  <path d="M18 2 Q2 2 2 18"/>
+  <line x1="25" y1="2" x2="25" y2="7"/><line x1="40" y1="2" x2="40" y2="5"/>
+  <line x1="2" y1="25" x2="7" y2="25"/><line x1="2" y1="40" x2="5" y2="40"/>
+  <path d="M30 28 Q22 35 30 42 Q18 40 18 35 Q18 28 30 28Z"/>
+  <line x1="10" y1="10" x2="10" y2="6"/><line x1="10" y1="10" x2="10" y2="14"/>
+  <line x1="10" y1="10" x2="6"  y2="10"/><line x1="10" y1="10" x2="14" y2="10"/>
+  <line x1="10" y1="10" x2="7.5" y2="7.5"/><line x1="10" y1="10" x2="12.5" y2="12.5"/>
+  <line x1="10" y1="10" x2="12.5" y2="7.5"/><line x1="10" y1="10" x2="7.5" y2="12.5"/>
+  <circle cx="48" cy="20" r="1.5" fill="#c9a84c" stroke="none"/>
+  <circle cx="42" cy="35" r="1.5" fill="#c9a84c" stroke="none"/>
+  <circle cx="20" cy="52" r="1.5" fill="#c9a84c" stroke="none"/>
+  <circle cx="35" cy="58" r="1"   fill="#c9a84c" stroke="none"/>
+  <line x1="48" y1="20" x2="42" y2="35" stroke-width=".6" opacity=".6"/>
+  <line x1="20" y1="52" x2="35" y2="58" stroke-width=".6" opacity=".6"/>
+  <path d="M55 14 L56.2 17 L59 18 L56.2 19 L55 22 L53.8 19 L51 18 L53.8 17Z" fill="#c9a84c" stroke="none" opacity=".8"/>
+</svg>
+</div>
+<div class="celestial-corner br" id="cel-corner-br">
+<svg viewBox="0 0 110 110" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#c9a84c" stroke-width="1">
+  <line x1="2" y1="2" x2="60" y2="2"/>
+  <line x1="2" y1="2" x2="2" y2="60"/>
+  <path d="M18 2 Q2 2 2 18"/>
+  <line x1="25" y1="2" x2="25" y2="7"/><line x1="40" y1="2" x2="40" y2="5"/>
+  <line x1="2" y1="25" x2="7" y2="25"/><line x1="2" y1="40" x2="5" y2="40"/>
+  <path d="M30 28 Q22 35 30 42 Q18 40 18 35 Q18 28 30 28Z"/>
+  <line x1="10" y1="10" x2="10" y2="6"/><line x1="10" y1="10" x2="10" y2="14"/>
+  <line x1="10" y1="10" x2="6"  y2="10"/><line x1="10" y1="10" x2="14" y2="10"/>
+  <line x1="10" y1="10" x2="7.5" y2="7.5"/><line x1="10" y1="10" x2="12.5" y2="12.5"/>
+  <line x1="10" y1="10" x2="12.5" y2="7.5"/><line x1="10" y1="10" x2="7.5" y2="12.5"/>
+  <circle cx="48" cy="20" r="1.5" fill="#c9a84c" stroke="none"/>
+  <circle cx="42" cy="35" r="1.5" fill="#c9a84c" stroke="none"/>
+  <circle cx="20" cy="52" r="1.5" fill="#c9a84c" stroke="none"/>
+  <circle cx="35" cy="58" r="1"   fill="#c9a84c" stroke="none"/>
+  <line x1="48" y1="20" x2="42" y2="35" stroke-width=".6" opacity=".6"/>
+  <line x1="20" y1="52" x2="35" y2="58" stroke-width=".6" opacity=".6"/>
+  <path d="M55 14 L56.2 17 L59 18 L56.2 19 L55 22 L53.8 19 L51 18 L53.8 17Z" fill="#c9a84c" stroke="none" opacity=".8"/>
+</svg>
+</div>
+<!-- Moon phase strip (bottom of page) -->
+<div class="moon-strip" id="cel-moon-strip">🌑 · 🌒 · 🌓 · 🌔 · 🌕 · 🌖 · 🌗 · 🌘 · 🌑</div>
+
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════
+// STATE
+// state.people:     [{id,name,notes,links:[{id,siteId,username,url}]}]
+// state.linkSites:  [{id,name}]  — sites for person links (Bluesky, Carrd…)
+// state.characters: [{id,name,ownerId,tags:[]}]
+// state.sites:      [{id,name,template,charTemplate}]  — posting sites
+// state.categories: [{id,name,tags[],collapsed}]
+// state.pieces:     [{id,title,postTitle,summary,personId,artistName,origUrl,dropbox,
+//                     desc,artistNotes,status,checklist:{},
+//                     selectedCats:[],extraTags:[],removedCharTags:[],characterIds:[],
+//                     costBase,costBaseDate,costExtras:[{id,label,amount,date}],
+//                     costTip,costTipDate,posting:{siteId:{posted,date}}}]
+// ══════════════════════════════════════════════
+let state = { theme:'dark', people:[], linkSites:[], characters:[], sites:[], categories:[], pieces:[] };
+
+const STATUS_LABELS = {none:'Not Started',draft:'Draft',ready:'Ready',posted:'Fully Posted'};
+
+let currentPieceId = null;
+let currentSiteId  = null;
+let editPersonId   = null;
+let editCharId     = null;
+let editSiteId     = null;
+// temporary state for person modal links (before save)
+let pmLinks        = [];
+// temporary state for char modal tags
+let cmTags         = [];
+
+// ══════════════════════════════════════════════
+// PERSISTENCE & MIGRATION
+// Bump CURRENT_VERSION any time you add a new field or change data shape.
+// Add a migration step in migrateData() for each version increment.
+// The migrate functions are cumulative — data always walks up through
+// every version it missed, so no version is ever skipped.
+// ══════════════════════════════════════════════
+const CURRENT_VERSION = 1;
+
+// Default shapes — used both for new items and for back-filling missing fields
+const PIECE_DEFAULTS = () => ({
+  id:'', title:'', postTitle:'', summary:'', personId:'', artistName:'',
+  dateCommissioned:'', dateDelivered:'',
+  origUrl:'', dropbox:'', desc:'', artistNotes:'', status:'none',
+  checklist:{}, selectedCats:[], extraTags:[], removedCharTags:[], characterIds:[],
+  costBase:0, costBaseDate:'', costExtras:[], costTip:0, costTipDate:'',
+  posting:{}, templateOverrides:{}
+});
+const PERSON_DEFAULTS  = () => ({ id:'', name:'', notes:'', links:[] });
+const CHAR_DEFAULTS    = () => ({ id:'', name:'', ownerId:'', tags:[] });
+const SITE_DEFAULTS    = () => ({ id:'', name:'', template:'', charTemplate:'' });
+const CATEGORY_DEFAULTS= () => ({ id:'', name:'', tags:[], collapsed:false });
+const LINKSITE_DEFAULTS= () => ({ id:'', name:'' });
+
+// Apply defaults to an object without overwriting existing values
+function applyDefaults(obj, defaults) {
+  const d = defaults();
+  Object.keys(d).forEach(k => {
+    if (obj[k] === undefined || obj[k] === null) obj[k] = d[k];
+  });
+  return obj;
+}
+
+// Migration steps: each function receives the raw data object and mutates it.
+// Add a new function here whenever CURRENT_VERSION increments.
+const MIGRATIONS = {
+  // Version 0 → 1: initial versioned release.
+  // Handles all legacy data that predates the version field.
+  1: (d) => {
+    // Rename queue → pieces
+    if (d.queue && !d.pieces) { d.pieces = d.queue; delete d.queue; }
+    // Migrate old artists array → people
+    if (d.artists && !d.people) {
+      d.people = d.artists.map(a => ({
+        id: a.id||uid(), name: a.name||'', notes: a.notes||'',
+        links: a.url ? [{id:uid(), siteId:'__general__', username:'', url:a.url}] : []
+      }));
+      delete d.artists;
+    }
+    // Ensure theme field
+    d.theme = d.theme || 'dark';
+    d.linkSites   = d.linkSites   || [];
+    d.characters  = d.characters  || [];
+    d.sites       = d.sites       || [];
+    d.categories  = d.categories  || [];
+    d.pieces      = d.pieces      || [];
+    // Back-fill all items with their defaults
+    d.people.forEach(    x => applyDefaults(x, PERSON_DEFAULTS));
+    d.characters.forEach(x => applyDefaults(x, CHAR_DEFAULTS));
+    d.sites.forEach(     x => applyDefaults(x, SITE_DEFAULTS));
+    d.categories.forEach(x => applyDefaults(x, CATEGORY_DEFAULTS));
+    d.linkSites.forEach( x => applyDefaults(x, LINKSITE_DEFAULTS));
+    d.pieces.forEach(p => {
+      applyDefaults(p, PIECE_DEFAULTS);
+      // Migrate old artistId → personId
+      if (!p.personId && p.artistId) { p.personId = p.artistId; delete p.artistId; }
+      // Ensure nested arrays/objects
+      p.costExtras.forEach(e => {
+        e.id    = e.id    || uid();
+        e.label = e.label || '';
+        e.amount= e.amount|| 0;
+        e.date  = e.date  || '';
+      });
+    });
+  },
+  // Future example — increment CURRENT_VERSION to 2 and add:
+  // 2: (d) => { d.pieces.forEach(p => { p.newField = p.newField || 'default'; }); }
+};
+
+function migrateData(d) {
+  const fromVersion = d._version || 0;
+  for (let v = fromVersion + 1; v <= CURRENT_VERSION; v++) {
+    if (MIGRATIONS[v]) {
+      MIGRATIONS[v](d);
+      console.log(`Migrated data from v${v-1} → v${v}`);
+    }
+  }
+  d._version = CURRENT_VERSION;
+  return d;
+}
+
+const MOON_FULL  = '🌑 · 🌒 · 🌓 · 🌔 · 🌕 · 🌖 · 🌗 · 🌘 · 🌑';
+const MOON_SHORT = '🌒 · 🌓 · 🌔 · 🌕 · 🌖 · 🌗 · 🌘';
+const MOON_MIN   = '🌑 · 🌕 · 🌑';
+let moonObserver = null;
+
+function fitMoonStrip() {
+  const el = document.getElementById('cel-moon-strip');
+  if (!el || el.style.display === 'none') return;
+  // Reset to full, measure, then trim if needed
+  el.textContent = MOON_FULL;
+  if (el.scrollWidth <= el.clientWidth + 2) return;
+  el.textContent = MOON_SHORT;
+  if (el.scrollWidth <= el.clientWidth + 2) return;
+  el.textContent = MOON_MIN;
+}
+
+function setTheme(t) {
+  state.theme = t;
+  document.body.dataset.theme = t;
+  document.querySelectorAll('.theme-pill').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById('theme-'+t);
+  if (btn) btn.classList.add('active');
+  const cel = t === 'celestial';
+  ['cel-corner-tl','cel-corner-tr','cel-corner-bl','cel-corner-br','cel-moon-strip']
+    .forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = cel ? '' : 'none';
+    });
+  if (cel) {
+    fitMoonStrip();
+    if (!moonObserver) {
+      moonObserver = new ResizeObserver(fitMoonStrip);
+      const strip = document.getElementById('cel-moon-strip');
+      if (strip) moonObserver.observe(strip);
+    }
+  } else if (moonObserver) {
+    moonObserver.disconnect();
+    moonObserver = null;
+  }
+}
+
+function exportData() {
+  const export_state = { ...state, _version: CURRENT_VERSION };
+  const json = JSON.stringify(export_state, null, 2);
+  const a = Object.assign(document.createElement('a'), {
+    href: URL.createObjectURL(new Blob([json],{type:'application/json'})),
+    download: 'art-toolkit-data.json'
+  });
+  a.click(); URL.revokeObjectURL(a.href);
+  toast('Exported!');
+}
+
+async function importData(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const r = new FileReader();
+  r.onload = async ev => {
+    try {
+      let d = JSON.parse(ev.target.result);
+      if (!d.pieces && !d.queue && !d.artists) throw new Error('Not a toolkit file');
+      if (!await ask('Import data? Current data will be replaced.','Import')) return;
+      d = migrateData(d);
+      state = {
+        _version:   CURRENT_VERSION,
+        theme:      d.theme || 'dark',
+        people:     d.people,
+        linkSites:  d.linkSites,
+        characters: d.characters,
+        sites:      d.sites,
+        categories: d.categories,
+        pieces:     d.pieces,
+      };
+      setTheme(state.theme);
+      showView('library');
+      const fromV = d._version < CURRENT_VERSION ? ` (migrated from v${d._version})` : '';
+      toast('Imported!' + fromV);
+    } catch(err) {
+      console.error(err);
+      toast('Import failed — not a valid toolkit file.');
+    }
+  };
+  r.readAsText(file); e.target.value = '';
+}
+
+// Safety net: called before accessing any piece to ensure all fields exist.
+// This catches any piece that was created before a new field was added,
+// without requiring a re-import.
+function ensurePieceDefaults(p) {
+  return applyDefaults(p, PIECE_DEFAULTS);
+}
+
+// ══════════════════════════════════════════════
+// VIEW ROUTING
+// ══════════════════════════════════════════════
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  const nb = document.getElementById('nav-'+name);
+  if (nb) nb.classList.add('active');
+  const inPiece = name === 'piece';
+  document.getElementById('breadcrumb').classList.toggle('visible', inPiece);
+  document.getElementById('piece-tabs').classList.toggle('visible', inPiece);
+  if (name==='library')    { populatePersonDropdown('q-person-id'); renderLibrary(); }
+  if (name==='people')     renderPeople();
+  if (name==='characters') { populatePersonDropdown('c-owner-id'); renderCharacters(); }
+  if (name==='sites')      renderSites();
+  if (name==='tags')       renderCategories();
+  if (name==='expenditure') renderExpenditure();
+  if (name==='piece')      renderPiece();
+}
+
+function showPieceTab(tab) {
+  document.querySelectorAll('.sub-view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('sub-'+tab).classList.add('active');
+  document.querySelectorAll('.piece-tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('ptab-'+tab).classList.add('active');
+  if (tab==='tags')      renderPieceTags();
+  if (tab==='formatter') { renderFormatterSiteTabs(); buildFormat(); }
+  if (tab==='posting')   renderPostingTracker();
+  if (tab==='cost')      renderCostTab();
+}
+
+function openPiece(id) { currentPieceId=id; showView('piece'); showPieceTab('info'); }
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id,e) {
+  if (e && e.target !== document.getElementById(id)) return;
+  document.getElementById(id).classList.remove('open');
+}
+
+// ══════════════════════════════════════════════
+// ART LIBRARY
+// ══════════════════════════════════════════════
+// ── Library filter state (session only) ──
+const libFilters = {
+  search:'', status:'', artist:'', char:'',
+  sitePosted:'', siteNotPosted:'',
+  tags:[], tagMode:'or', sort:'default'
+};
+
+function setTagMode(mode) {
+  libFilters.tagMode = mode;
+  document.getElementById('tag-mode-or').classList.toggle('active',  mode==='or');
+  document.getElementById('tag-mode-and').classList.toggle('active', mode==='and');
+  renderLibrary();
+}
+function addTagFilter(tag) {
+  if (!tag || libFilters.tags.includes(tag)) return;
+  libFilters.tags.push(tag); renderTagChips(); renderLibrary();
+}
+function removeTagFilter(tag) {
+  libFilters.tags = libFilters.tags.filter(t=>t!==tag); renderTagChips(); renderLibrary();
+}
+function renderTagChips() {
+  document.getElementById('lib-tag-chips').innerHTML =
+    libFilters.tags.map(t=>`<span class="tag-filter-chip active">${esc(t)}<button class="remove" onclick="removeTagFilter('${esc(t)}')" style="margin-left:4px">×</button></span>`).join('');
+}
+function clearLibraryFilters() {
+  libFilters.search=''; libFilters.status=''; libFilters.artist='';
+  libFilters.char=''; libFilters.sitePosted=''; libFilters.siteNotPosted='';
+  libFilters.tags=[]; libFilters.tagMode='or'; libFilters.sort='default';
+  ['lib-search','lib-status','lib-artist','lib-char','lib-site-posted','lib-site-not-posted','lib-tag-select'].forEach(id=>setVal(id,''));
+  setVal('lib-sort-field','default');
+  setTagMode('or'); renderTagChips(); renderLibrary();
+}
+
+function populateLibraryFilterDropdowns() {
+  const repopulate = (elId, options, cur) => {
+    const el = document.getElementById(elId); if(!el) return;
+    el.innerHTML = options; el.value = cur;
+  };
+  repopulate('lib-artist',
+    '<option value="">All artists</option>' + state.people.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join(''),
+    libFilters.artist);
+  repopulate('lib-char',
+    '<option value="">All characters</option>' + state.characters.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join(''),
+    libFilters.char);
+  const siteOpts = '<option value="">Any</option>' + state.sites.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('');
+  repopulate('lib-site-posted',     siteOpts, libFilters.sitePosted);
+  repopulate('lib-site-not-posted', siteOpts, libFilters.siteNotPosted);
+  const allTags = new Set();
+  state.pieces.forEach(p => {
+    getCharTags(p).forEach(t=>allTags.add(t));
+    (p.selectedCats||[]).forEach(cid=>{const c=state.categories.find(x=>x.id===cid);if(c)c.tags.forEach(t=>allTags.add(t));});
+    (p.extraTags||[]).forEach(t=>allTags.add(t));
+  });
+  repopulate('lib-tag-select',
+    '<option value="">Add tag filter…</option>' + [...allTags].sort().map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join(''),
+    '');
+}
+
+function pieceTotal(p) {
+  if (!p) return 0;
+  return (parseFloat(p.costBase)||0) +
+    (p.costExtras||[]).reduce((s,e)=>s+(parseFloat(e.amount)||0),0) +
+    (parseFloat(p.costTip)||0);
+}
+function getPieceTags(p) {
+  const all = new Set();
+  getCharTags(p).filter(t=>!(p.removedCharTags||[]).includes(t)).forEach(t=>all.add(t));
+  (p.selectedCats||[]).forEach(cid=>{const c=state.categories.find(x=>x.id===cid);if(c)c.tags.forEach(t=>all.add(t));});
+  (p.extraTags||[]).forEach(t=>all.add(t));
+  return all;
+}
+
+function addPiece() {
+  const title    = v('q-title').trim();
+  const personId = v('q-person-id');
+  const person   = state.people.find(p=>p.id===personId);
+  if (!title && !person) { toast('Add a title or pick a person.'); return; }
+  state.pieces.unshift({
+    id:uid(), title:title||'(untitled)', postTitle:'', summary:'',
+    personId:personId||'', artistName:person?person.name:'',
+    dateCommissioned:'', dateDelivered:'',
+    origUrl:'', dropbox:'', desc:'', artistNotes:'',
+    status:'none', checklist:{}, selectedCats:[], extraTags:[],
+    removedCharTags:[], characterIds:[],
+    costBase:0, costBaseDate:'', costExtras:[], costTip:0, costTipDate:'',
+    posting:{}, templateOverrides:{}
+  });
+  setVal('q-title',''); setVal('q-person-id','');
+  renderLibrary();
+}
+
+const STATUS_ORDER = {none:0,draft:1,ready:2,posted:3};
+function setFilter(f) { libFilters.status=f; setVal('lib-status',f); renderLibrary(); }
+
+function renderLibrary() {
+  populateLibraryFilterDropdowns();
+  libFilters.search        = v('lib-search').toLowerCase();
+  libFilters.status        = v('lib-status');
+  libFilters.artist        = v('lib-artist');
+  libFilters.char          = v('lib-char');
+  libFilters.sitePosted    = v('lib-site-posted');
+  libFilters.siteNotPosted = v('lib-site-not-posted');
+  libFilters.sort          = v('lib-sort-field');
+
+  let items = state.pieces.map(ensurePieceDefaults);
+
+  if (libFilters.search) {
+    const q = libFilters.search;
+    items = items.filter(p => p.title.toLowerCase().includes(q) || (p.artistName||'').toLowerCase().includes(q));
+  }
+  if (libFilters.status)        items = items.filter(p => p.status === libFilters.status);
+  if (libFilters.artist)        items = items.filter(p => p.personId === libFilters.artist);
+  if (libFilters.char)          items = items.filter(p => (p.characterIds||[]).includes(libFilters.char));
+  if (libFilters.sitePosted)    items = items.filter(p => (p.posting||{})[libFilters.sitePosted]?.posted);
+  if (libFilters.siteNotPosted) items = items.filter(p => !(p.posting||{})[libFilters.siteNotPosted]?.posted);
+  if (libFilters.tags.length) {
+    items = items.filter(p => {
+      const pt = getPieceTags(p);
+      return libFilters.tagMode === 'or'
+        ? libFilters.tags.some(t => pt.has(t))
+        : libFilters.tags.every(t => pt.has(t));
+    });
+  }
+
+  const s = libFilters.sort;
+  if (s==='title-az')             items.sort((a,b)=>(a.title||'').localeCompare(b.title||''));
+  if (s==='title-za')             items.sort((a,b)=>(b.title||'').localeCompare(a.title||''));
+  if (s==='artist-az')            items.sort((a,b)=>(a.artistName||'').localeCompare(b.artistName||''));
+  if (s==='date-commissioned-new') items.sort((a,b)=>(b.dateCommissioned||'').localeCompare(a.dateCommissioned||''));
+  if (s==='date-commissioned-old') items.sort((a,b)=>(a.dateCommissioned||'').localeCompare(b.dateCommissioned||''));
+  if (s==='date-delivered-new')   items.sort((a,b)=>(b.dateDelivered||'').localeCompare(a.dateDelivered||''));
+  if (s==='date-delivered-old')   items.sort((a,b)=>(a.dateDelivered||'').localeCompare(b.dateDelivered||''));
+  if (s==='cost-high')            items.sort((a,b)=>(pieceTotal(b)||0)-(pieceTotal(a)||0));
+  if (s==='cost-low')             items.sort((a,b)=>(pieceTotal(a)||0)-(pieceTotal(b)||0));
+  if (s==='status')               items.sort((a,b)=>(STATUS_ORDER[a.status]||0)-(STATUS_ORDER[b.status]||0));
+
+  const total = state.pieces.length;
+  document.getElementById('lib-result-count').textContent = items.length === total
+    ? `${total} piece${total!==1?'s':''}`
+    : `${items.length} of ${total} piece${total!==1?'s':''}`;
+
+  const el = document.getElementById('library-list');
+  if (!items.length) {
+    el.innerHTML = `<div class="empty">${state.pieces.length ? 'No pieces match these filters.' : 'No pieces yet — add one above.'}</div>`;
+    return;
+  }
+  el.innerHTML = items.map(item => {
+    const thumb   = dropboxDirect(item.dropbox);
+    const thumbEl = thumb
+      ? `<img class="lib-thumb" src="${esc(thumb)}" alt="" onerror="this.style.display='none'">`
+      : `<div class="lib-thumb-ph">🖼</div>`;
+    const meta = [
+      item.artistName ? 'by ' + esc(item.artistName) : '',
+      item.dateCommissioned ? '📅 ' + item.dateCommissioned : '',
+    ].filter(Boolean).join('  ·  ');
+    return `<div class="lib-card" onclick="openPiece('${item.id}')">
+      ${thumbEl}
+      <div class="lib-info">
+        <div class="lib-title">${esc(item.title)}</div>
+        <div class="lib-meta">${meta||'&nbsp;'}</div>
+      </div>
+      <span class="status-badge status-${item.status}">${STATUS_LABELS[item.status]}</span>
+    </div>`;
+  }).join('');
+}
+
+
+// ══════════════════════════════════════════════
+// PIECE WORKSPACE
+// ══════════════════════════════════════════════
+function piece() {
+  const p = state.pieces.find(i=>i.id===currentPieceId);
+  return p ? ensurePieceDefaults(p) : null;
+}
+function savePF(field,val) { const p=piece(); if(p) p[field]=val; }
+
+function renderPiece() {
+  const p=piece(); if (!p) return;
+  document.getElementById('breadcrumb-title').textContent=p.title;
+  document.getElementById('piece-status-select').value=p.status;
+  populatePersonDropdown('pi-person-id');
+  setVal('pi-person-id',          p.personId||'');
+  setVal('pi-title',              p.title);
+  setVal('pi-post-title',         p.postTitle);
+  setVal('pi-date-commissioned',  p.dateCommissioned||'');
+  setVal('pi-date-delivered',     p.dateDelivered||'');
+  setVal('pi-artist-name',        p.artistName);
+  setVal('pi-orig-url',           p.origUrl);
+  setVal('pi-dropbox',            p.dropbox);
+  setVal('pi-summary',            p.summary||'');
+  setVal('pi-desc',               p.desc);
+  setVal('pi-artist-notes',       p.artistNotes);
+  updateImagePreview();
+  renderPieceCharSelector();
+}
+function setPieceStatus(val) { const p=piece(); if(p) p.status=val; }
+
+function applyPersonToPiece(personId) {
+  const p=piece(); if(!p) return;
+  p.personId=personId;
+  const person=state.people.find(x=>x.id===personId);
+  if (person) { p.artistName=person.name; setVal('pi-artist-name',person.name); }
+}
+
+async function deletePiece() {
+  if (!await ask('Delete this piece and all its data?')) return;
+  state.pieces=state.pieces.filter(i=>i.id!==currentPieceId);
+  currentPieceId=null; showView('library');
+}
+
+function dropboxDirect(url) {
+  if (!url || !url.trim()) return null;
+  url = url.trim();
+  // Already a direct link
+  if (url.includes('dl.dropboxusercontent.com')) return url;
+  // Convert share links to direct download links
+  url = url.replace('www.dropbox.com', 'dl.dropboxusercontent.com');
+  url = url.replace('dropbox.com/s/', 'dl.dropboxusercontent.com/s/');
+  url = url.replace(/[?&]dl=0/, '').replace(/[?&]dl=1/, '');
+  return url;
+}
+function updateImagePreview() {
+  const p=piece(); if(!p) return;
+  const url=dropboxDirect(p.dropbox);
+  const wrap=document.getElementById('img-preview-wrap');
+  const img=document.getElementById('img-preview');
+  const err=document.getElementById('img-preview-err');
+  if (url) {
+    img.style.display='block'; err.style.display='none';
+    img.src=url; wrap.style.display='block';
+  } else { wrap.style.display='none'; img.src=''; }
+}
+
+// ── Character selector on Info tab ──
+function renderPieceCharSelector() {
+  const p=piece(); if(!p) return;
+  p.characterIds=p.characterIds||[];
+  const el=document.getElementById('pi-char-selector');
+  if (!state.characters.length) { el.innerHTML='<div class="empty">No characters yet — add them in Characters.</div>'; return; }
+  el.innerHTML=state.characters.map(c=>{
+    const owner=state.people.find(x=>x.id===c.ownerId);
+    const checked=p.characterIds.includes(c.id);
+    return `<div class="char-select-row">
+      <input type="checkbox" id="pchar-${c.id}" ${checked?'checked':''} onchange="togglePieceChar('${c.id}',this.checked)">
+      <label for="pchar-${c.id}" class="char-select-info" style="cursor:pointer">
+        <div class="char-select-name">${esc(c.name)}</div>
+        ${owner?`<div class="char-select-owner">owned by ${esc(owner.name)}</div>`:''}
+      </label>
+    </div>`;
+  }).join('');
+}
+
+function togglePieceChar(charId, checked) {
+  const p=piece(); if(!p) return;
+  p.characterIds=p.characterIds||[];
+  p.removedCharTags=p.removedCharTags||[];
+  const char=state.characters.find(c=>c.id===charId);
+  if (checked) {
+    if (!p.characterIds.includes(charId)) p.characterIds.push(charId);
+    // remove from removedCharTags so their tags re-apply
+    if (char) p.removedCharTags=p.removedCharTags.filter(t=>!(char.tags||[]).includes(t));
+  } else {
+    p.characterIds=p.characterIds.filter(id=>id!==charId);
+  }
+}
+
+// ── Tags ──
+function renderPieceTags() {
+  const p=piece(); if(!p) return;
+  p.selectedCats=p.selectedCats||[]; p.extraTags=p.extraTags||[]; p.removedCharTags=p.removedCharTags||[];
+  // Collect char tags
+  const charTags=getCharTags(p);
+  // Char tags display
+  const charEl=document.getElementById('char-sourced-tags');
+  if (charTags.length) {
+    charEl.innerHTML=charTags.map(t=>{
+      const removed=p.removedCharTags.includes(t);
+      return `<span class="tag" style="${removed?'opacity:.4':''}">${esc(t)}
+        <button class="remove" onclick="toggleCharTag('${esc(t)}')" title="${removed?'Re-add':'Remove'}">${removed?'+':'×'}</button>
+      </span>`;
+    }).join('');
+  } else {
+    charEl.innerHTML='<span style="font-size:12px;color:var(--ink-faint);font-style:italic">No character tags yet.</span>';
+  }
+  // Category selector
+  const catEl=document.getElementById('piece-cat-selector');
+  catEl.innerHTML=state.categories.length
+    ? state.categories.map(cat=>`
+      <div class="cat-select-row">
+        <input type="checkbox" id="pcat-${cat.id}" ${p.selectedCats.includes(cat.id)?'checked':''} onchange="togglePieceCat('${cat.id}')">
+        <label class="cat-select-label" for="pcat-${cat.id}">${esc(cat.name)}</label>
+        <span class="cat-select-count">${cat.tags.length} tag${cat.tags.length!==1?'s':''}</span>
+      </div>`).join('')
+    : '<div class="empty">No categories yet.</div>';
+  renderExtraTags(); updatePieceTagOutput();
+}
+
+function getCharTags(p) {
+  const all=new Set();
+  (p.characterIds||[]).forEach(cid=>{
+    const c=state.characters.find(x=>x.id===cid);
+    if (c) (c.tags||[]).forEach(t=>all.add(t));
+  });
+  return [...all];
+}
+
+function toggleCharTag(tag) {
+  const p=piece(); if(!p) return;
+  p.removedCharTags=p.removedCharTags||[];
+  const idx=p.removedCharTags.indexOf(tag);
+  if (idx===-1) p.removedCharTags.push(tag); else p.removedCharTags.splice(idx,1);
+  renderPieceTags();
+}
+
+function togglePieceCat(catId) {
+  const p=piece(); if(!p) return;
+  const idx=p.selectedCats.indexOf(catId);
+  if (idx===-1) p.selectedCats.push(catId); else p.selectedCats.splice(idx,1);
+  updatePieceTagOutput();
+}
+
+function addExtraTag() {
+  const p=piece(); if(!p) return;
+  const inp=document.getElementById('extra-tag-inp');
+  const tag=inp.value.trim(); if(!tag) return;
+  if (!p.extraTags.includes(tag)) p.extraTags.push(tag);
+  inp.value=''; renderExtraTags(); updatePieceTagOutput();
+}
+function removeExtraTag(tag) {
+  const p=piece(); if(!p) return;
+  p.extraTags=p.extraTags.filter(t=>t!==tag); renderExtraTags(); updatePieceTagOutput();
+}
+function renderExtraTags() {
+  const p=piece(); if(!p) return;
+  document.getElementById('extra-tags-list').innerHTML=(p.extraTags||[]).map(t=>
+    `<span class="tag">${esc(t)}<button class="remove" onclick="removeExtraTag('${esc(t)}')">×</button></span>`).join('');
+}
+function updatePieceTagOutput() {
+  const p=piece(); if(!p) return;
+  const all=new Set();
+  // char tags minus removed
+  getCharTags(p).filter(t=>!(p.removedCharTags||[]).includes(t)).forEach(t=>all.add(t));
+  // category tags
+  (p.selectedCats||[]).forEach(cid=>{const c=state.categories.find(x=>x.id===cid);if(c)c.tags.forEach(t=>all.add(t));});
+  // extra tags
+  (p.extraTags||[]).forEach(t=>all.add(t));
+  const arr=[...all];
+  document.getElementById('piece-tag-preview').innerHTML=arr.map(t=>`<span class="tag">${esc(t)}</span>`).join('');
+  document.getElementById('piece-tag-output').textContent=arr.length?arr.join(', '):'Select categories or add characters to build your tag list.';
+}
+
+// ── Cost ──
+function renderCostTab() {
+  const p=piece(); if(!p) return;
+  setVal('cost-base',      p.costBase||'');
+  setVal('cost-base-date', p.costBaseDate||'');
+  setVal('cost-tip',       p.costTip||'');
+  setVal('cost-tip-date',  p.costTipDate||'');
+  renderCostExtras(); updateCostTotal();
+}
+function renderCostExtras() {
+  const p=piece(); if(!p) return;
+  const el=document.getElementById('cost-extras');
+  if (!p.costExtras||!p.costExtras.length) { el.innerHTML='<div style="font-size:12px;color:var(--ink-faint);font-style:italic;padding:4px 0">None yet.</div>'; return; }
+  el.innerHTML=p.costExtras.map(item=>`
+    <div class="exp-item">
+      <input type="text"   value="${esc(item.label)}"  placeholder="Label (e.g. Alt version)" style="flex:2;min-width:80px" oninput="updateCostExtra('${item.id}','label',this.value)">
+      <input type="number" value="${item.amount||''}"  placeholder="0.00" min="0" step="0.01" style="flex:1;min-width:60px" oninput="updateCostExtra('${item.id}','amount',parseFloat(this.value)||0)">
+      <input type="date"   value="${esc(item.date||'')}" style="flex:1.2;min-width:100px" oninput="updateCostExtra('${item.id}','date',this.value)">
+      <button class="btn btn-danger btn-sm" onclick="removeCostExtra('${item.id}')">✕</button>
+    </div>`).join('');
+}
+function addCostItem() {
+  const p=piece(); if(!p) return;
+  p.costExtras=p.costExtras||[];
+  p.costExtras.push({id:uid(),label:'',amount:0,date:''});
+  renderCostExtras(); updateCostTotal();
+}
+function updateCostExtra(id,field,val) {
+  const p=piece(); if(!p) return;
+  const item=p.costExtras.find(i=>i.id===id); if(item) item[field]=val;
+  updateCostTotal();
+}
+function removeCostExtra(id) {
+  const p=piece(); if(!p) return;
+  p.costExtras=p.costExtras.filter(i=>i.id!==id); renderCostExtras(); updateCostTotal();
+}
+function updateCostTotal() {
+  const p=piece(); if(!p) return;
+  const base=parseFloat(p.costBase)||0;
+  const extras=(p.costExtras||[]).reduce((s,i)=>s+(parseFloat(i.amount)||0),0);
+  const tip=parseFloat(p.costTip)||0;
+  document.getElementById('cost-total-display').innerHTML=
+    `<b>Base:</b> $${base.toFixed(2)} &nbsp;·&nbsp; <b>Additional:</b> $${extras.toFixed(2)} &nbsp;·&nbsp; <b>Tip:</b> $${tip.toFixed(2)} &nbsp;·&nbsp; <b>Total:</b> $${(base+extras+tip).toFixed(2)}`;
+}
+
+// ── Formatter ──
+function renderFormatterSiteTabs() {
+  const el=document.getElementById('formatter-site-tabs');
+  if (!state.sites.length) { el.innerHTML='<span style="font-size:12px;color:var(--ink-faint);font-style:italic">No sites defined yet.</span>'; document.getElementById('override-section').style.display='none'; return; }
+  if (!currentSiteId || !state.sites.find(s=>s.id===currentSiteId)) currentSiteId=state.sites[0]?.id||null;
+  if (!currentSiteId) return;
+  el.innerHTML=state.sites.map(s=>
+    `<button class="site-tab ${currentSiteId===s.id?'active':''}" onclick="selectSite('${s.id}',this)">${esc(s.name)}</button>`).join('');
+  renderOverrideSection();
+}
+function selectSite(siteId,btn) {
+  currentSiteId=siteId;
+  document.querySelectorAll('.site-tab').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  renderOverrideSection();
+  buildFormat();
+}
+function renderOverrideSection() {
+  const p=piece(); if(!p) return;
+  if (!currentSiteId) { document.getElementById('override-section').style.display='none'; return; }
+  p.templateOverrides=p.templateOverrides||{};
+  const ov=p.templateOverrides[currentSiteId]||{};
+  document.getElementById('override-section').style.display='block';
+  const postChk=document.getElementById('override-post-chk');
+  const postBody=document.getElementById('override-post-body');
+  postChk.checked=!!ov.postEnabled;
+  postBody.style.display=ov.postEnabled?'block':'none';
+  if (ov.postEnabled) setVal('override-post-tpl',ov.post||'');
+  const charChk=document.getElementById('override-char-chk');
+  const charBody=document.getElementById('override-char-body');
+  charChk.checked=!!ov.charEnabled;
+  charBody.style.display=ov.charEnabled?'block':'none';
+  if (ov.charEnabled) setVal('override-char-tpl',ov.char||'');
+  // Populate post placeholder chips with link site entries
+  const phEl=document.getElementById('override-ph-post');
+  const phs=['{Title}','{Summary}','{Description}','{ArtistNotes}','{Tags}','{Characters}','{Artist.Name}'];
+  let chips=phs.map(ph=>`<span class="ph-chip" onclick="copyRaw('${ph}')">${ph.replace(/\{/g,'&#123;').replace(/\}/g,'&#125;')}</span>`).join('');
+  state.linkSites.forEach(ls=>{
+    chips+=`<span class="ph-chip" onclick="copyRaw('{Artist.${ls.name}.URL}')">{Artist.${esc(ls.name)}.URL}</span>`;
+    chips+=`<span class="ph-chip" onclick="copyRaw('{Artist.${ls.name}.Username}')">{Artist.${esc(ls.name)}.Username}</span>`;
+  });
+  phEl.innerHTML=chips;
+}
+function toggleOverride(type) {
+  const p=piece(); if(!p||!currentSiteId) return;
+  p.templateOverrides=p.templateOverrides||{};
+  if(!p.templateOverrides[currentSiteId]) p.templateOverrides[currentSiteId]={};
+  const ov=p.templateOverrides[currentSiteId];
+  const site=state.sites.find(s=>s.id===currentSiteId);
+  if (type==='post') {
+    ov.postEnabled=!ov.postEnabled;
+    document.getElementById('override-post-body').style.display=ov.postEnabled?'block':'none';
+    if (ov.postEnabled && !ov.post) { ov.post=site?site.template:''; setVal('override-post-tpl',ov.post); }
+  } else {
+    ov.charEnabled=!ov.charEnabled;
+    document.getElementById('override-char-body').style.display=ov.charEnabled?'block':'none';
+    if (ov.charEnabled && !ov.char) { ov.char=site?site.charTemplate:''; setVal('override-char-tpl',ov.char); }
+  }
+  buildFormat();
+}
+function saveOverride(type,val) {
+  const p=piece(); if(!p||!currentSiteId) return;
+  p.templateOverrides=p.templateOverrides||{};
+  if(!p.templateOverrides[currentSiteId]) p.templateOverrides[currentSiteId]={};
+  if (type==='post') p.templateOverrides[currentSiteId].post=val;
+  else               p.templateOverrides[currentSiteId].char=val;
+}
+
+function resolvePersonLinks(person, siteId) {
+  // Returns {SiteName: {username, url}} map for a person
+  if (!person) return {};
+  const map={};
+  (person.links||[]).forEach(lnk=>{
+    const ls=state.linkSites.find(s=>s.id===lnk.siteId);
+    if (ls) map[ls.name]={username:lnk.username||'',url:lnk.url||''};
+  });
+  return map;
+}
+
+function applyPersonPlaceholders(text, prefix, person) {
+  // Replace {prefix.Name}, {prefix.SiteName.URL}, {prefix.SiteName.Username}
+  text=text.replace(new RegExp('\\{'+prefix+'\\.Name\\}','g'), person?person.name:'');
+  const linkMap=resolvePersonLinks(person);
+  Object.entries(linkMap).forEach(([siteName,{username,url}])=>{
+    const sn=siteName.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    text=text.replace(new RegExp('\\{'+prefix+'\\.'+sn+'\\.URL\\}','g'),      url);
+    text=text.replace(new RegExp('\\{'+prefix+'\\.'+sn+'\\.Username\\}','g'), username);
+  });
+  return text;
+}
+
+function buildFormat() {
+  const p=piece(); if(!p) return;
+  const out=document.getElementById('formatter-output');
+  if (!currentSiteId) { out.textContent='No site selected.'; return; }
+  const site=state.sites.find(s=>s.id===currentSiteId);
+  if (!site||!site.template) { out.textContent='This site has no template yet — edit it in Sites.'; return; }
+
+  const artist=state.people.find(a=>a.id===p.personId);
+  const ov=(p.templateOverrides||{})[currentSiteId]||{};
+
+  // Build tag string
+  const allTags=new Set();
+  getCharTags(p).filter(t=>!(p.removedCharTags||[]).includes(t)).forEach(t=>allTags.add(t));
+  (p.selectedCats||[]).forEach(cid=>{const c=state.categories.find(x=>x.id===cid);if(c)c.tags.forEach(t=>allTags.add(t));});
+  (p.extraTags||[]).forEach(t=>allTags.add(t));
+  const tagsStr=[...allTags].join(', ');
+
+  // Resolve character line template (override or global)
+  const charTpl = (ov.charEnabled && ov.char) ? ov.char : site.charTemplate;
+
+  // Build character lines
+  let charsStr='';
+  if (charTpl && (p.characterIds||[]).length) {
+    charsStr=(p.characterIds||[]).map(cid=>{
+      const char=state.characters.find(x=>x.id===cid); if(!char) return '';
+      const owner=state.people.find(x=>x.id===char.ownerId);
+      let line=charTpl;
+      line=line.replace(/\{Character\.Name\}/g, char.name||'');
+      line=applyPersonPlaceholders(line,'Character.Owner',owner);
+      return line;
+    }).filter(Boolean).join('\n');
+  } else if ((p.characterIds||[]).length) {
+    charsStr=(p.characterIds||[]).map(cid=>{
+      const char=state.characters.find(x=>x.id===cid); if(!char) return '';
+      const owner=state.people.find(x=>x.id===char.ownerId);
+      return char.name+(owner?' ('+owner.name+')':'');
+    }).filter(Boolean).join('\n');
+  }
+
+  // Resolve post template (override or global)
+  const postTpl = (ov.postEnabled && ov.post) ? ov.post : site.template;
+
+  let text=postTpl;
+  text=text.replace(/\{Title\}/g,        p.postTitle||p.title||'')
+           .replace(/\{Summary\}/g,       p.summary||'')
+           .replace(/\{Description\}/g,   p.desc||'')
+           .replace(/\{ArtistNotes\}/g,   p.artistNotes||'')
+           .replace(/\{Tags\}/g,          tagsStr)
+           .replace(/\{Characters\}/g,    charsStr);
+  text=applyPersonPlaceholders(text,'Artist',artist);
+  out.textContent=text;
+}
+
+// ── Posting ──
+function renderPostingTracker() {
+  const p=piece(); if(!p) return;
+  p.posting=p.posting||{};
+  const el=document.getElementById('posting-tracker-rows');
+  if (!state.sites.length) { el.innerHTML='<div class="empty">No sites defined yet.</div>'; return; }
+  el.innerHTML=state.sites.map(s=>{
+    const entry=p.posting[s.id]||{posted:false,date:''};
+    return `<div class="posting-row">
+      <span class="posting-site">${esc(s.name)}</span>
+      <input type="checkbox" title="Posted" ${entry.posted?'checked':''} onchange="setPostingPosted('${s.id}',this.checked)">
+      <input type="date" value="${esc(entry.date||'')}" onchange="setPostingDate('${s.id}',this.value)">
+    </div>`;
+  }).join('');
+}
+function setPostingPosted(siteId,val) { const p=piece();if(!p)return;p.posting=p.posting||{};p.posting[siteId]=p.posting[siteId]||{};p.posting[siteId].posted=val; }
+function setPostingDate(siteId,val)   { const p=piece();if(!p)return;p.posting=p.posting||{};p.posting[siteId]=p.posting[siteId]||{};p.posting[siteId].date=val; }
+
+
+// ══════════════════════════════════════════════
+// PEOPLE
+// ══════════════════════════════════════════════
+function addPerson() {
+  const name=v('p-name').trim(); if(!name){toast('Name required.');return;}
+  state.people.push({id:uid(),name,notes:'',links:[]});
+  setVal('p-name',''); renderPeople();
+}
+function renderPeople() {
+  // Link sites list
+  const lsEl=document.getElementById('link-sites-list');
+  lsEl.innerHTML=state.linkSites.length
+    ? state.linkSites.map(s=>`
+      <div class="row center" style="gap:7px;padding:4px 0;border-bottom:1px solid var(--rule)">
+        <span style="font-size:13px;flex:1">${esc(s.name)}</span>
+        <button class="btn btn-danger btn-sm" onclick="deleteLinkSite('${s.id}')">✕</button>
+      </div>`).join('')
+    : '<div style="font-size:12px;color:var(--ink-faint);font-style:italic">No link sites yet.</div>';
+  // People
+  const el=document.getElementById('people-list');
+  if (!state.people.length){el.innerHTML='<div class="empty">No people yet.</div>';return;}
+  el.innerHTML=state.people.map(p=>{
+    const linkCount=(p.links||[]).length;
+    return `<div class="roster-card" onclick="openPersonModal('${p.id}')">
+      <div class="row center">
+        <div class="grow"><div class="roster-name">${esc(p.name)}</div>
+          <div class="roster-meta">${linkCount} link${linkCount!==1?'s':''}</div>
+        </div>
+        <button class="btn btn-ghost btn-sm">Edit</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function addLinkSite() {
+  const name=v('new-link-site').trim(); if(!name)return;
+  if (state.linkSites.find(s=>s.name.toLowerCase()===name.toLowerCase())){toast('Already exists.');return;}
+  state.linkSites.push({id:uid(),name});
+  setVal('new-link-site',''); renderPeople();
+}
+async function deleteLinkSite(id) {
+  if(!await ask('Delete this link site? It will be removed from all person links.'))return;
+  state.linkSites=state.linkSites.filter(s=>s.id!==id);
+  state.people.forEach(p=>{p.links=(p.links||[]).filter(l=>l.siteId!==id);});
+  renderPeople();
+}
+function openPersonModal(id) {
+  editPersonId=id;
+  const person=state.people.find(x=>x.id===id); if(!person)return;
+  setVal('pm-name',person.name); setVal('pm-notes',person.notes||'');
+  pmLinks=JSON.parse(JSON.stringify(person.links||[]));
+  renderPersonModalLinks();
+  openModal('person-modal');
+}
+function renderPersonModalLinks() {
+  const el=document.getElementById('pm-links');
+  if (!pmLinks.length){el.innerHTML='<div style="font-size:12px;color:var(--ink-faint);font-style:italic">No links yet.</div>';return;}
+  el.innerHTML=pmLinks.map((lnk,i)=>`
+    <div class="link-entry">
+      <select onchange="pmLinks[${i}].siteId=this.value" style="flex:1.2">
+        <option value="">— site —</option>
+        ${state.linkSites.map(s=>`<option value="${s.id}" ${lnk.siteId===s.id?'selected':''}>${esc(s.name)}</option>`).join('')}
+      </select>
+      <input type="text" value="${esc(lnk.username||'')}" placeholder="Username" style="flex:1" oninput="pmLinks[${i}].username=this.value">
+      <input type="text" value="${esc(lnk.url||'')}" placeholder="URL" style="flex:1.5" oninput="pmLinks[${i}].url=this.value">
+      <button class="btn btn-danger btn-sm" onclick="removePersonLink(${i})">✕</button>
+    </div>`).join('');
+}
+function addPersonLink() { pmLinks.push({id:uid(),siteId:'',username:'',url:''}); renderPersonModalLinks(); }
+function removePersonLink(i) { pmLinks.splice(i,1); renderPersonModalLinks(); }
+function savePersonModal() {
+  const person=state.people.find(x=>x.id===editPersonId); if(!person)return;
+  person.name=v('pm-name').trim()||person.name;
+  person.notes=v('pm-notes').trim();
+  person.links=JSON.parse(JSON.stringify(pmLinks));
+  // update artistName on pieces
+  state.pieces.forEach(p=>{ if(p.personId===editPersonId && !p._artistNameOverridden) p.artistName=person.name; });
+  closeModal('person-modal'); renderPeople(); toast('Saved.');
+}
+async function deletePerson() {
+  if(!await ask('Delete this person?'))return;
+  state.people=state.people.filter(p=>p.id!==editPersonId);
+  closeModal('person-modal'); renderPeople();
+}
+function populatePersonDropdown(elId) {
+  const el=document.getElementById(elId); if(!el)return;
+  const cur=el.value;
+  el.innerHTML='<option value="">— pick person —</option>'+
+    state.people.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');
+  el.value=cur;
+}
+
+// ══════════════════════════════════════════════
+// CHARACTERS
+// ══════════════════════════════════════════════
+function addCharacter() {
+  const name=v('c-name').trim(); if(!name){toast('Name required.');return;}
+  state.characters.push({id:uid(),name,ownerId:v('c-owner-id')||'',tags:[]});
+  setVal('c-name',''); setVal('c-owner-id',''); renderCharacters();
+}
+function renderCharacters() {
+  const el=document.getElementById('character-list');
+  if (!state.characters.length){el.innerHTML='<div class="empty">No characters yet.</div>';return;}
+  el.innerHTML=state.characters.map(c=>{
+    const owner=state.people.find(x=>x.id===c.ownerId);
+    const pieceCount=state.pieces.filter(p=>(p.characterIds||[]).includes(c.id)).length;
+    return `<div class="roster-card" onclick="openCharModal('${c.id}')">
+      <div class="row center">
+        <div class="grow">
+          <div class="roster-name">${esc(c.name)}</div>
+          <div class="roster-meta">
+            ${owner?'Owned by '+esc(owner.name)+' · ':''}
+            ${(c.tags||[]).length} tag${(c.tags||[]).length!==1?'s':''} · ${pieceCount} piece${pieceCount!==1?'s':''}
+          </div>
+        </div>
+        <button class="btn btn-ghost btn-sm">Edit</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function openCharModal(id) {
+  editCharId=id;
+  const c=state.characters.find(x=>x.id===id); if(!c)return;
+  setVal('cm-name',c.name);
+  populatePersonDropdown('cm-owner-id');
+  setVal('cm-owner-id',c.ownerId||'');
+  cmTags=JSON.parse(JSON.stringify(c.tags||[]));
+  renderCharModalTags();
+  // Pieces featuring this character
+  const pieces=state.pieces.filter(p=>(p.characterIds||[]).includes(id));
+  document.getElementById('cm-pieces').innerHTML=pieces.length
+    ? pieces.map(p=>`<span class="piece-ref" onclick="closeModal('char-modal');openPiece('${p.id}')">${esc(p.title)}</span>`).join('')
+    : '<span style="font-size:12px;color:var(--ink-faint);font-style:italic">None yet.</span>';
+  openModal('char-modal');
+}
+function renderCharModalTags() {
+  document.getElementById('cm-tags').innerHTML=cmTags.map((t,i)=>
+    `<span class="tag">${esc(t)}<button class="remove" onclick="cmTags.splice(${i},1);renderCharModalTags()">×</button></span>`).join('');
+}
+function addCharTag() {
+  const inp=document.getElementById('cm-tag-inp');
+  const tag=inp.value.trim(); if(!tag)return;
+  if(!cmTags.includes(tag)) cmTags.push(tag);
+  inp.value=''; renderCharModalTags();
+}
+function saveCharModal() {
+  const c=state.characters.find(x=>x.id===editCharId); if(!c)return;
+  c.name=v('cm-name').trim()||c.name;
+  c.ownerId=v('cm-owner-id')||'';
+  c.tags=JSON.parse(JSON.stringify(cmTags));
+  closeModal('char-modal'); renderCharacters(); toast('Saved.');
+}
+async function deleteCharacter() {
+  if(!await ask('Delete this character?'))return;
+  state.characters=state.characters.filter(c=>c.id!==editCharId);
+  state.pieces.forEach(p=>{p.characterIds=(p.characterIds||[]).filter(id=>id!==editCharId);});
+  closeModal('char-modal'); renderCharacters();
+}
+
+// ══════════════════════════════════════════════
+// SITES
+// ══════════════════════════════════════════════
+function addSite() {
+  const name=v('s-name').trim(); if(!name){toast('Site name required.');return;}
+  state.sites.push({id:uid(),name,template:'',charTemplate:''});
+  setVal('s-name',''); renderSites();
+}
+function renderSites() {
+  const el=document.getElementById('site-list');
+  if (!state.sites.length){el.innerHTML='<div class="empty">No sites yet.</div>';return;}
+  el.innerHTML=state.sites.map(s=>`
+    <div class="roster-card" onclick="openSiteModal('${s.id}')">
+      <div class="row center">
+        <div class="grow">
+          <div class="roster-name">${esc(s.name)}</div>
+          <div class="roster-meta" style="font-family:monospace;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:400px">
+            ${s.template?esc(s.template.slice(0,60))+'…':'No template yet'}
+          </div>
+        </div>
+        <button class="btn btn-ghost btn-sm">Edit</button>
+      </div>
+    </div>`).join('');
+}
+function openSiteModal(id) {
+  editSiteId=id;
+  const s=state.sites.find(x=>x.id===id); if(!s)return;
+  setVal('sm-name',s.name); setVal('sm-template',s.template||''); setVal('sm-char-template',s.charTemplate||'');
+  openModal('site-modal');
+}
+function saveSiteModal() {
+  const s=state.sites.find(x=>x.id===editSiteId); if(!s)return;
+  s.name=v('sm-name').trim()||s.name;
+  s.template=v('sm-template');
+  s.charTemplate=v('sm-char-template');
+  closeModal('site-modal'); renderSites(); toast('Saved.');
+}
+async function deleteSite() {
+  if(!await ask('Delete this site?'))return;
+  state.sites=state.sites.filter(s=>s.id!==editSiteId);
+  closeModal('site-modal'); renderSites();
+}
+
+// ══════════════════════════════════════════════
+// TAG CATEGORIES
+// ══════════════════════════════════════════════
+function addCategory() {
+  const inp=document.getElementById('new-cat-name');
+  const name=inp.value.trim(); if(!name)return;
+  state.categories.push({id:uid(),name,tags:[],collapsed:false});
+  inp.value=''; renderCategories();
+}
+function renderCategories() {
+  const el=document.getElementById('category-list');
+  if (!state.categories.length){el.innerHTML='<div class="empty">No categories yet.</div>';return;}
+  el.innerHTML=state.categories.map(cat=>`
+    <div class="category-card">
+      <div class="category-header ${cat.collapsed?'cat-collapsed':''}" onclick="toggleCat('${cat.id}')">
+        <div class="row center" style="gap:8px">
+          <span class="category-name">${esc(cat.name)}</span>
+          <span class="category-count">${cat.tags.length} tag${cat.tags.length!==1?'s':''}</span>
+        </div>
+        <div class="row center" style="gap:5px">
+          <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();renameCategory('${cat.id}')">Rename</button>
+          <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteCategory('${cat.id}')">Delete</button>
+          <span class="chevron">▾</span>
+        </div>
+      </div>
+      ${cat.collapsed?'':`<div class="category-body">
+        <div class="tag-list" style="margin-bottom:9px">
+          ${cat.tags.map(t=>`<span class="tag">${esc(t)}<button class="remove" onclick="removeTag('${cat.id}','${esc(t)}')">×</button></span>`).join('')}
+          ${!cat.tags.length?'<span style="font-size:12px;color:var(--ink-faint);font-style:italic">No tags yet</span>':''}
+        </div>
+        <div class="row" style="gap:7px">
+          <input type="text" id="tag-inp-${cat.id}" placeholder="Add tag…" style="flex:1" onkeydown="if(event.key==='Enter')addTag('${cat.id}')">
+          <button class="btn btn-ghost btn-sm" onclick="addTag('${cat.id}')">+ Add</button>
+        </div>
+      </div>`}
+    </div>`).join('');
+}
+function toggleCat(id){const c=state.categories.find(x=>x.id===id);if(c){c.collapsed=!c.collapsed;renderCategories();}}
+function addTag(catId){
+  const inp=document.getElementById('tag-inp-'+catId);
+  const tag=inp.value.trim();if(!tag)return;
+  const cat=state.categories.find(c=>c.id===catId);
+  if(cat&&!cat.tags.includes(tag)){cat.tags.push(tag);renderCategories();}else inp.value='';
+}
+function removeTag(catId,tag){const c=state.categories.find(x=>x.id===catId);if(c){c.tags=c.tags.filter(t=>t!==tag);renderCategories();}}
+async function deleteCategory(id){
+  if(!await ask('Delete this category?'))return;
+  state.categories=state.categories.filter(c=>c.id!==id);
+  state.pieces.forEach(p=>{p.selectedCats=(p.selectedCats||[]).filter(c=>c!==id);});
+  renderCategories();
+}
+async function renameCategory(id){
+  const c=state.categories.find(x=>x.id===id);if(!c)return;
+  // Use a dedicated rename dialog since prompt() is blocked in sandboxed iframes
+  const n = await askInput('Rename category:', c.name);
+  if(n!==null&&n.trim()){c.name=n.trim();renderCategories();}
+}
+
+// ══════════════════════════════════════════════
+// EXPENDITURE
+// ══════════════════════════════════════════════
+function renderExpenditure() {
+  const pe=document.getElementById('exp-person');
+  const curP=pe.value;
+  pe.innerHTML='<option value="">All people</option>'+state.people.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');
+  pe.value=curP;
+  const ce=document.getElementById('exp-char');
+  const curC=ce.value;
+  ce.innerHTML='<option value="">All characters</option>'+state.characters.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
+  ce.value=curC;
+  renderChart();
+}
+function renderChart() {
+  const group  = v('exp-group')||'month';
+  const range  = v('exp-range')||'12m';
+  const personF= v('exp-person');
+  const charF  = v('exp-char');
+  let pieces=state.pieces.filter(p=>{
+    if(personF&&p.personId!==personF)return false;
+    if(charF&&!(p.characterIds||[]).includes(charF))return false;
+    return true;
+  });
+  const now=new Date();
+  let startDate=null;
+  if(range==='1m')  startDate=new Date(now.getFullYear(),now.getMonth()-1,now.getDate());
+  if(range==='3m')  startDate=new Date(now.getFullYear(),now.getMonth()-3,now.getDate());
+  if(range==='6m')  startDate=new Date(now.getFullYear(),now.getMonth()-6,now.getDate());
+  if(range==='12m') startDate=new Date(now.getFullYear()-1,now.getMonth(),now.getDate());
+  if(range==='2y')  startDate=new Date(now.getFullYear()-2,now.getMonth(),now.getDate());
+  const events=[];
+  pieces.forEach(p=>{
+    if(p.costBase&&p.costBaseDate) events.push({date:localDate(p.costBaseDate),base:parseFloat(p.costBase)||0,extra:0});
+    (p.costExtras||[]).forEach(e=>{if(e.amount&&e.date)events.push({date:localDate(e.date),base:0,extra:parseFloat(e.amount)||0});});
+    if(p.costTip&&p.costTipDate) events.push({date:localDate(p.costTipDate),base:0,extra:parseFloat(p.costTip)||0});
+  });
+  const filtered=startDate?events.filter(e=>e.date>=startDate):events;
+  // ISO week key: year is the ISO week-year (which can differ from calendar year near Jan 1)
+  function isoWeek(d) {
+    // Copy date and move to nearest Thursday (ISO weeks start Monday, anchor on Thursday)
+    const tmp = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    tmp.setDate(tmp.getDate() + 4 - (tmp.getDay()||7));
+    const yearStart = new Date(tmp.getFullYear(), 0, 1);
+    const wk = Math.ceil((((tmp - yearStart) / 86400000) + 1) / 7);
+    return `${tmp.getFullYear()}-W${String(wk).padStart(2,'0')}`;
+  }
+  function bk(d){
+    if(group==='week') return isoWeek(d);
+    if(group==='year') return `${d.getFullYear()}`;
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+  }
+  // For the label walk, always step by 7 days from startDate and key each Monday
+  // This guarantees bk(cur) matches bk(event.date) for the same week
+  const buckets={};
+  filtered.forEach(e=>{const k=bk(e.date);if(!buckets[k])buckets[k]={base:0,extra:0};buckets[k].base+=e.base;buckets[k].extra+=e.extra;});
+  const labels=[];
+  if(range!=='all'&&startDate){
+    let cur=new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+    // For weekly, snap cur back to the Monday of startDate's week so keys align
+    if(group==='week'){ const dow=cur.getDay()||7; cur.setDate(cur.getDate()-dow+1); }
+    while(cur<=now){
+      const k=bk(cur);
+      if(!labels.includes(k)) labels.push(k);
+      if(group==='week') cur.setDate(cur.getDate()+7);
+      else if(group==='year') cur.setFullYear(cur.getFullYear()+1);
+      else cur.setMonth(cur.getMonth()+1);
+    }
+  } else { Object.keys(buckets).sort().forEach(k=>{if(!labels.includes(k))labels.push(k);}); }
+  // Merge any bucket keys from events that fell outside the walk (edge case for 'all' range)
+  Object.keys(buckets).forEach(k=>{if(!labels.includes(k))labels.push(k);});
+  labels.sort();
+  const baseVals=labels.map(k=>buckets[k]?.base||0);
+  const extraVals=labels.map(k=>buckets[k]?.extra||0);
+  // Draw
+  const canvas=document.getElementById('chart-canvas');
+  const ctx=canvas.getContext('2d');
+  const dpr=window.devicePixelRatio||1;
+  const W=Math.max(canvas.parentElement.clientWidth-32,200);
+
+  // Label strategy — figure out rotation and step before setting canvas height
+  const nBars=labels.length||1;
+  const gapPx=(W-64)/nBars;
+  const shortLabels=labels.map(l=>l.length>7?l.slice(-5):l);
+  const maxLblW=Math.max(...shortLabels.map(l=>l.length))*6; // ~6px per char at 10px font
+  const rotate=gapPx < maxLblW+4;
+  // Effective label footprint along the x-axis after rotation:
+  // flat → label width; rotated 45° → label height projected ≈ label width * sin(45°) ≈ w*0.71
+  const lblFootprint = rotate ? Math.max(...shortLabels.map(l=>l.length))*6*0.72 : maxLblW;
+  // Step: smallest integer so that step*gapPx >= lblFootprint + a minimum gap of 4px
+  const step = Math.max(1, Math.ceil((lblFootprint+4)/gapPx));
+  const bottomPad=rotate ? 68 : 48;
+
+  const H=240;
+  canvas.width=W*dpr;canvas.height=H*dpr;canvas.style.width=W+'px';canvas.style.height=H+'px';
+  ctx.scale(dpr,dpr);ctx.clearRect(0,0,W,H);
+  const PAD={top:16,right:12,bottom:bottomPad,left:52};
+  const cW=W-PAD.left-PAD.right;const cH=H-PAD.top-PAD.bottom;
+  const maxVal=Math.max(...labels.map((_,i)=>baseVals[i]+extraVals[i]),1);
+  const barW=Math.max(3,Math.min(36,cW/nBars*0.65));
+  const gap=cW/nBars;
+
+  // Gridlines + y-axis labels
+  ctx.strokeStyle='#e8e0d8';ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){
+    const y=PAD.top+cH*(1-i/4);
+    ctx.beginPath();ctx.moveTo(PAD.left,y);ctx.lineTo(PAD.left+cW,y);ctx.stroke();
+    ctx.fillStyle='#8a7f78';ctx.font='11px Inter,sans-serif';ctx.textAlign='right';
+    ctx.fillText('$'+(maxVal*i/4).toFixed(0),PAD.left-5,y+4);
+  }
+
+  // Bars + x-axis labels
+  labels.forEach((lbl,i)=>{
+    const cx=PAD.left+gap*i+gap/2;
+    const x=cx-barW/2;
+    const bH=(baseVals[i]/maxVal)*cH;
+    const eH=(extraVals[i]/maxVal)*cH;
+    if(eH>0){ctx.fillStyle='#c8b8e8';ctx.fillRect(x,PAD.top+cH-bH-eH,barW,eH);}
+    if(bH>0){ctx.fillStyle='#7b5ea7';ctx.fillRect(x,PAD.top+cH-bH,barW,bH);}
+
+    if(i%step!==0) return; // skip labels that would overlap
+
+    const short=shortLabels[i];
+    ctx.fillStyle='#8a7f78';
+    ctx.font='10px Inter,sans-serif';
+    if(rotate){
+      ctx.save();
+      ctx.translate(cx,PAD.top+cH+8);
+      ctx.rotate(-Math.PI/4);
+      ctx.textAlign='right';
+      ctx.fillText(short,0,0);
+      ctx.restore();
+    } else {
+      ctx.textAlign='center';
+      ctx.fillText(short,cx,H-PAD.bottom+14);
+    }
+  });
+  document.getElementById('chart-legend').innerHTML=`<span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:2px;background:#7b5ea7;display:inline-block"></span>Base cost</span><span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:2px;background:#c8b8e8;display:inline-block"></span>Extras &amp; tips</span>`;
+  const tb=baseVals.reduce((a,b)=>a+b,0);const te=extraVals.reduce((a,b)=>a+b,0);
+  document.getElementById('exp-summary').innerHTML=`Showing <b>${labels.length}</b> ${group==='week'?'week':group==='year'?'year':'month'}${labels.length!==1?'s':''} &nbsp;·&nbsp; Base: <b>$${tb.toFixed(2)}</b> &nbsp;·&nbsp; Extras &amp; tips: <b>$${te.toFixed(2)}</b> &nbsp;·&nbsp; Total: <b>$${(tb+te).toFixed(2)}</b>`;
+
+  // ── Itemized table ──
+  // Build per-bucket event list with piece context
+  const bucketEvents = {}; // {bucketKey: [{label, type, piece, artist, chars, amount, date}]}
+  pieces.forEach(p => {
+    const person = state.people.find(x=>x.id===p.personId);
+    const artistName = p.artistName || (person?person.name:'');
+    const chars = (p.characterIds||[]).map(cid=>{const c=state.characters.find(x=>x.id===cid);return c?c.name:'';}).filter(Boolean).join(', ');
+    const addEvent = (date, label, type, amount) => {
+      const d = localDate(date);
+      if (startDate && d < startDate) return;
+      const k = bk(d);
+      if (!bucketEvents[k]) bucketEvents[k]=[];
+      bucketEvents[k].push({label, type, piece:p.title||'(untitled)', artist:artistName, chars, amount, date});
+    };
+    if (p.costBase && p.costBaseDate) addEvent(p.costBaseDate, 'Commission', 'base', parseFloat(p.costBase)||0);
+    (p.costExtras||[]).forEach(e=>{ if(e.amount&&e.date) addEvent(e.date, e.label||'Additional cost', 'extra', parseFloat(e.amount)||0); });
+    if (p.costTip && p.costTipDate) addEvent(p.costTipDate, 'Tip', 'tip', parseFloat(p.costTip)||0);
+  });
+
+  const tbody = document.getElementById('exp-table-body');
+  if (!labels.length) { tbody.innerHTML=`<tr><td colspan="6" style="text-align:center;color:var(--ink-faint);font-style:italic;padding:16px">No cost data in this range.</td></tr>`; return; }
+
+  // Only render buckets that have data
+  const activeLbls = labels.filter(lbl => (bucketEvents[lbl]||[]).length > 0);
+
+  if (!activeLbls.length) {
+    tbody.innerHTML=`<tr><td colspan="6" style="text-align:center;color:var(--ink-faint);font-style:italic;padding:16px">No payments recorded in this range.</td></tr>`;
+    return;
+  }
+
+  // Grand total row
+  const grandBase  = activeLbls.reduce((s,lbl)=>(bucketEvents[lbl]||[]).filter(e=>e.type==='base').reduce((a,e)=>a+e.amount,s),0);
+  const grandExtra = activeLbls.reduce((s,lbl)=>(bucketEvents[lbl]||[]).filter(e=>e.type!=='base').reduce((a,e)=>a+e.amount,s),0);
+  const grandTotal = grandBase + grandExtra;
+  const totalRow = `<tr style="background:var(--page-warm);font-weight:600;font-size:12px;">
+    <td colspan="5" style="padding:8px;border-bottom:2px solid var(--rule);">
+      Total — ${activeLbls.length} ${group==='week'?'week':group==='year'?'year':'month'}${activeLbls.length!==1?'s':''} with activity
+    </td>
+    <td class="exp-amount" style="padding:8px;border-bottom:2px solid var(--rule);">
+      $${grandTotal.toFixed(2)}<span style="font-size:10px;font-weight:400;color:var(--ink-soft)"> (base $${grandBase.toFixed(2)} + extras $${grandExtra.toFixed(2)})</span>
+    </td>
+  </tr>`;
+
+  tbody.innerHTML = totalRow + activeLbls.map(lbl => {
+    const events = (bucketEvents[lbl]||[]).sort((a,b)=>localDate(a.date)-localDate(b.date));
+    const bucketBase  = events.filter(e=>e.type==='base').reduce((s,e)=>s+e.amount,0);
+    const bucketExtra = events.filter(e=>e.type!=='base').reduce((s,e)=>s+e.amount,0);
+    const bucketTotal = bucketBase + bucketExtra;
+    const headerRow = `<tr class="exp-bucket-header">
+      <td colspan="5">${esc(lbl)}</td>
+      <td class="exp-amount">$${bucketTotal.toFixed(2)}<span style="font-size:10px;font-weight:400;color:var(--ink-soft)"> (base $${bucketBase.toFixed(2)} + extras $${bucketExtra.toFixed(2)})</span></td>
+    </tr>`;
+    const eventRows = events.map(e=>`<tr class="exp-row-${e.type}">
+      <td></td>
+      <td><span class="exp-type-pill exp-type-${e.type}">${e.type==='base'?'Base':e.type==='tip'?'Tip':'Extra'}</span> ${esc(e.label)}</td>
+      <td>${esc(e.piece)}</td>
+      <td>${esc(e.artist)}</td>
+      <td style="color:var(--ink-faint)">${esc(e.chars)}</td>
+      <td class="exp-amount">$${e.amount.toFixed(2)}</td>
+    </tr>`).join('');
+    return headerRow + eventRows;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════════
+// Custom async confirm (replaces blocked window.confirm in iframes)
+let confirmResolve = ()=>{};
+function ask(msg, okLabel='Delete') {
+  return new Promise(resolve => {
+    document.getElementById('confirm-msg').textContent = msg;
+    document.getElementById('confirm-ok-btn').textContent = okLabel;
+    document.getElementById('confirm-modal').classList.add('open');
+    confirmResolve = (val) => {
+      document.getElementById('confirm-modal').classList.remove('open');
+      resolve(val);
+    };
+  });
+}
+
+let inputResolve = ()=>{};
+function askInput(label, defaultVal='') {
+  return new Promise(resolve => {
+    document.getElementById('input-modal-label').textContent = label;
+    const field = document.getElementById('input-modal-field');
+    field.value = defaultVal;
+    document.getElementById('input-modal').classList.add('open');
+    // Submit on Enter
+    field.onkeydown = e => { if(e.key==='Enter') inputResolve(field.value); };
+    inputResolve = (val) => {
+      document.getElementById('input-modal').classList.remove('open');
+      field.onkeydown = null;
+      resolve(val===null ? null : val);
+    };
+    setTimeout(()=>field.focus(), 50);
+  });
+}
+function uid(){return Math.random().toString(36).slice(2,9);}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function v(id){return document.getElementById(id)?.value||'';}
+function setVal(id,val){const el=document.getElementById(id);if(el)el.value=val||'';}
+// Parse a YYYY-MM-DD string as local midnight (not UTC) to avoid timezone bucketing bugs
+function localDate(str){if(!str)return new Date(NaN);const[y,m,d]=str.split('-').map(Number);return new Date(y,m-1,d);}
+function copyText(id){navigator.clipboard.writeText(document.getElementById(id)?.textContent||'').then(()=>toast('Copied!')).catch(()=>toast('Copy failed.'));}
+function copyRaw(txt){navigator.clipboard.writeText(txt).then(()=>toast('Copied: '+txt)).catch(()=>toast('Failed.'));}
+let _tt;
+function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>el.classList.remove('show'),2200);}
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+setTheme(state.theme);
+renderLibrary();
+</script>
+</body>
+</html>
