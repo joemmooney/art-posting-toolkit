@@ -111,19 +111,44 @@ body[data-theme=celestial] .main{position:relative;}
 body[data-theme=celestial] .app-header h1::before{content:'✦ ';font-size:.9em;opacity:.7;}
 body[data-theme=celestial] .app-header h1::after{content:' ☽';font-size:.85em;opacity:.6;}
 
-/* Theme switcher pills */
-.theme-switcher{display:flex;gap:4px;background:rgba(255,255,255,.08);border-radius:20px;padding:3px;}
-.theme-pill{background:none;border:none;border-radius:16px;padding:4px 10px;font:500 11px 'Inter',sans-serif;cursor:pointer;color:var(--header-text);opacity:.55;transition:opacity .15s,background .15s;white-space:nowrap;}
-.theme-pill:hover{opacity:.85;}
-.theme-pill.active{background:rgba(255,255,255,.15);opacity:1;}
+
 body{font-family:'Inter',sans-serif;background:var(--page);color:var(--ink);min-height:100vh;font-size:14px;line-height:1.5;}
 .app-header{padding:13px 22px;display:flex;align-items:center;gap:12px;}
 .app-header h1{font-family:'Lora',serif;font-size:1.15rem;font-weight:600;flex:1;}
 .header-btns{display:flex;gap:7px;flex-wrap:wrap;}
-.nav{background:var(--page-warm);border-bottom:1px solid var(--rule);display:flex;gap:1px;padding:0 22px;overflow-x:auto;-webkit-overflow-scrolling:touch;}
-.nav-btn{background:none;border:none;border-bottom:3px solid transparent;padding:10px 14px;font:500 13px 'Inter',sans-serif;color:var(--ink-faint);cursor:pointer;transition:color .15s,border-color .15s;white-space:nowrap;min-height:44px;}
+.nav{background:var(--page-warm);border-bottom:1px solid var(--rule);display:flex;gap:1px;padding:0 22px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;}
+.nav::-webkit-scrollbar{display:none;}
+.nav-btn{background:none;border:none;border-bottom:3px solid transparent;padding:10px 14px;font:500 13px 'Inter',sans-serif;color:var(--ink-faint);cursor:pointer;transition:color .15s,border-color .15s;white-space:nowrap;min-height:44px;display:flex;align-items:center;gap:6px;position:relative;}
 .nav-btn:hover{color:var(--ink);}
 .nav-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
+.nav-icon{width:18px;height:18px;flex-shrink:0;}
+/* Tab display modes */
+body[data-tabmode=text]  .nav-icon{display:none;}
+body[data-tabmode=both]  .nav-icon{display:block;}
+body[data-tabmode=icons] .nav-icon{display:block;}
+body[data-tabmode=icons] .nav-label{display:none;}
+body[data-tabmode=icons] .nav-btn{padding:10px 13px;}
+body[data-tabmode=icons] .nav-btn::after{
+  content:attr(data-label);position:absolute;top:100%;left:50%;transform:translateX(-50%);
+  background:var(--ink);color:var(--page);font-size:11px;padding:4px 8px;
+  border-radius:4px;white-space:nowrap;pointer-events:none;
+  opacity:0;transition:opacity .15s;z-index:200;margin-top:4px;
+}
+body[data-tabmode=icons] .nav-btn:hover::after{opacity:1;}
+/* Settings */
+.settings-section{margin-bottom:22px;}
+.settings-section-title{font-size:11px;font-weight:600;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--rule);}
+.settings-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--page-warm);}
+.settings-row:last-child{border-bottom:none;}
+.settings-row-info{flex:1;}
+.settings-row-label{font-size:13px;font-weight:500;}
+.settings-row-sub{font-size:11px;color:var(--ink-faint);margin-top:2px;}
+.mode-group{display:flex;border:1px solid var(--rule);border-radius:var(--radius);overflow:hidden;}
+.mode-btn{background:none;border:none;border-right:1px solid var(--rule);padding:7px 14px;font:500 12px 'Inter',sans-serif;cursor:pointer;color:var(--ink-soft);transition:all .15s;display:flex;align-items:center;gap:5px;}
+.mode-btn:last-child{border-right:none;}
+.mode-btn.active{background:var(--accent);color:#fff;}
+.mode-btn:hover:not(.active){color:var(--accent);}
+
 .breadcrumb{border-bottom:1px solid var(--rule);padding:8px 22px;display:none;align-items:center;gap:9px;font-size:13px;flex-wrap:wrap;}
 .breadcrumb.visible{display:flex;}
 .breadcrumb-back{background:none;border:none;color:var(--accent);cursor:pointer;font:500 13px 'Inter',sans-serif;padding:0;min-height:44px;display:flex;align-items:center;}
@@ -316,11 +341,6 @@ textarea{resize:vertical;min-height:78px;}
 
 <header class="app-header">
   <h1>Art Posting Toolkit</h1>
-  <div class="theme-switcher">
-    <button class="theme-pill" id="theme-light"     onclick="setTheme('light')">Light</button>
-    <button class="theme-pill" id="theme-dark"      onclick="setTheme('dark')">Dark</button>
-    <button class="theme-pill" id="theme-celestial" onclick="setTheme('celestial')">✦ Celestial</button>
-  </div>
   <div class="header-btns">
     <button class="btn btn-ghost btn-sm" onclick="exportData()">Export</button>
     <button class="btn btn-ghost btn-sm" onclick="document.getElementById('import-input').click()">Import</button>
@@ -329,12 +349,34 @@ textarea{resize:vertical;min-height:78px;}
 </header>
 
 <nav class="nav">
-  <button class="nav-btn active" id="nav-library"     onclick="showView('library')">Art Library</button>
-  <button class="nav-btn"        id="nav-people"      onclick="showView('people')">People</button>
-  <button class="nav-btn"        id="nav-characters"  onclick="showView('characters')">Characters</button>
-  <button class="nav-btn"        id="nav-sites"       onclick="showView('sites')">Sites</button>
-  <button class="nav-btn"        id="nav-tags"        onclick="showView('tags')">Tag Categories</button>
-  <button class="nav-btn"        id="nav-expenditure" onclick="showView('expenditure')">Expenditure</button>
+  <button class="nav-btn active" id="nav-library"     onclick="showView('library')"     data-label="Art Library">
+    <svg class="nav-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="14" height="12" rx="1.5"/><path d="M2 7h14"/><path d="M6 3v4"/></svg>
+    <span class="nav-label">Art Library</span>
+  </button>
+  <button class="nav-btn" id="nav-people"      onclick="showView('people')"      data-label="People">
+    <svg class="nav-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="6" r="3"/><path d="M3 15c0-3.314 2.686-5 6-5s6 1.686 6 5"/></svg>
+    <span class="nav-label">People</span>
+  </button>
+  <button class="nav-btn" id="nav-characters"  onclick="showView('characters')"  data-label="Characters">
+    <svg class="nav-icon" viewBox="0 0 512 512" fill="none" stroke="currentColor" stroke-width="32" stroke-miterlimit="10" xmlns="http://www.w3.org/2000/svg"><path d="M457.74,170.1a30.26,30.26,0,0,0-11.16-2.1h-.4c-20.17.3-42.79,19.19-54.66,47.76-14.23,34.18-7.68,69.15,14.74,78.14a30.21,30.21,0,0,0,11.15,2.1c20.27,0,43.2-19,55.17-47.76C486.71,214.06,480.06,179.09,457.74,170.1Z"/><path d="M327.6,303.48C299.8,257.35,287.8,240,256,240s-43.9,17.46-71.7,63.48c-23.8,39.36-71.9,42.64-83.9,76.07a50.91,50.91,0,0,0-3.6,19.25c0,27.19,20.8,49.2,46.4,49.2,31.8,0,75.1-25.39,112.9-25.39S337,448,368.8,448c25.6,0,46.3-22,46.3-49.2a51,51,0,0,0-3.7-19.25C399.4,346,351.4,342.84,327.6,303.48Z"/><path d="M192.51,196a26.53,26.53,0,0,0,4-.3c23.21-3.37,37.7-35.53,32.44-71.85C224,89.61,203.22,64,181.49,64a26.53,26.53,0,0,0-4,.3c-23.21,3.37-37.7,35.53-32.44,71.85C150,170.29,170.78,196,192.51,196Z"/><path d="M366.92,136.15c5.26-36.32-9.23-68.48-32.44-71.85a26.53,26.53,0,0,0-4-.3c-21.73,0-42.47,25.61-47.43,59.85-5.26,36.32,9.23,68.48,32.44,71.85a26.53,26.53,0,0,0,4,.3C341.22,196,362,170.29,366.92,136.15Z"/><path d="M105.77,293.9c22.39-9,28.93-44,14.72-78.14C108.53,187,85.62,168,65.38,168a30.21,30.21,0,0,0-11.15,2.1c-22.39,9-28.93,44-14.72,78.14C51.47,277,74.38,296,94.62,296A30.21,30.21,0,0,0,105.77,293.9Z"/></svg>
+    <span class="nav-label">Characters</span>
+  </button>
+  <button class="nav-btn" id="nav-sites"       onclick="showView('sites')"       data-label="Sites">
+    <svg class="nav-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="7"/><path d="M9 2c-2 2-3 4-3 7s1 5 3 7"/><path d="M9 2c2 2 3 4 3 7s-1 5-3 7"/><path d="M2 9h14"/></svg>
+    <span class="nav-label">Sites</span>
+  </button>
+  <button class="nav-btn" id="nav-tags"        onclick="showView('tags')"        data-label="Tag Categories">
+    <svg class="nav-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h5.5l6.5 6.5-5.5 5.5L3 8.5V3z"/><circle cx="6" cy="6" r="1" fill="currentColor" stroke="none"/></svg>
+    <span class="nav-label">Tag Categories</span>
+  </button>
+  <button class="nav-btn" id="nav-expenditure" onclick="showView('expenditure')" data-label="Expenditure">
+    <svg class="nav-icon" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="7"/><path d="M9 5v1.5M9 11.5V13"/><path d="M11.5 7.5c0-1-1-1.5-2.5-1.5S6.5 6.5 6.5 7.5s1 1.5 2.5 1.5 2.5.5 2.5 1.5S10 12 8.5 12 6.5 11.5 6.5 10.5"/></svg>
+    <span class="nav-label">Expenditure</span>
+  </button>
+  <button class="nav-btn" id="nav-settings"    onclick="showView('settings')"    data-label="Settings">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M16 12a4 4 0 11-8 0 4 4 0 018 0zm-1.5 0a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/><path fill-rule="evenodd" d="M12 1c-.268 0-.534.01-.797.028-.763.055-1.345.617-1.512 1.304l-.352 1.45c-.02.078-.09.172-.225.22a8.45 8.45 0 00-.728.303c-.13.06-.246.044-.315.002l-1.274-.776c-.604-.368-1.412-.354-1.99.147-.403.348-.78.726-1.129 1.128-.5.579-.515 1.387-.147 1.99l.776 1.275c.042.069.059.185-.002.315-.112.237-.213.48-.302.728-.05.135-.143.206-.221.225l-1.45.352c-.687.167-1.249.749-1.304 1.512a11.149 11.149 0 000 1.594c.055.763.617 1.345 1.304 1.512l1.45.352c.078.02.172.09.22.225.09.248.191.491.303.729.06.129.044.245.002.314l-.776 1.274c-.368.604-.354 1.412.147 1.99.348.403.726.78 1.128 1.129.579.5 1.387.515 1.99.147l1.275-.776c.069-.042.185-.059.315.002.237.112.48.213.728.302.135.05.206.143.225.221l.352 1.45c.167.687.749 1.249 1.512 1.303a11.125 11.125 0 001.594 0c.763-.054 1.345-.616 1.512-1.303l.352-1.45c.02-.078.09-.172.225-.22.248-.09.491-.191.729-.303.129-.06.245-.044.314-.002l1.274.776c.604.368 1.412.354 1.99-.147.403-.348.78-.726 1.129-1.128.5-.579.515-1.387.147-1.99l-.776-1.275c-.042-.069-.059-.185.002-.315.112-.237.213-.48.302-.728.05-.135.143-.206.221-.225l1.45-.352c.687-.167 1.249-.749 1.303-1.512a11.125 11.125 0 000-1.594c-.054-.763-.616-1.345-1.303-1.512l-1.45-.352c-.078-.02-.172-.09-.22-.225a8.469 8.469 0 00-.303-.728c-.06-.13-.044-.246-.002-.315l.776-1.274c.368-.604.354-1.412-.147-1.99-.348-.403-.726-.78-1.128-1.129-.579-.5-1.387-.515-1.99-.147l-1.275.776c-.069.042-.185.059-.315-.002a8.465 8.465 0 00-.728-.302c-.135-.05-.206-.143-.225-.221l-.352-1.45c-.167-.687-.749-1.249-1.512-1.304A11.149 11.149 0 0012 1zm-.69 1.525a9.648 9.648 0 011.38 0c.055.004.135.05.162.16l.351 1.45c.153.628.626 1.08 1.173 1.278.205.074.405.157.6.249a1.832 1.832 0 001.733-.074l1.275-.776c.097-.06.186-.036.228 0 .348.302.674.628.976.976.036.042.06.13 0 .228l-.776 1.274a1.832 1.832 0 00-.074 1.734c.092.195.175.395.248.6.198.547.652 1.02 1.278 1.172l1.45.353c.111.026.157.106.161.161a9.653 9.653 0 010 1.38c-.004.055-.05.135-.16.162l-1.45.351a1.833 1.833 0 00-1.278 1.173 6.926 6.926 0 01-.25.6 1.832 1.832 0 00.075 1.733l.776 1.275c.06.097.036.186 0 .228a9.555 9.555 0 01-.976.976c-.042.036-.13.06-.228 0l-1.275-.776a1.832 1.832 0 00-1.733-.074 6.926 6.926 0 01-.6.248 1.833 1.833 0 00-1.172 1.278l-.353 1.45c-.026.111-.106.157-.161.161a9.653 9.653 0 01-1.38 0c-.055-.004-.135-.05-.162-.16l-.351-1.45a1.833 1.833 0 00-1.173-1.278 6.928 6.928 0 01-.6-.25 1.832 1.832 0 00-1.734.075l-1.274.776c-.097.06-.186.036-.228 0a9.56 9.56 0 01-.976-.976c-.036-.042-.06-.13 0-.228l.776-1.275a1.832 1.832 0 00.074-1.733 6.948 6.948 0 01-.249-.6 1.833 1.833 0 00-1.277-1.172l-1.45-.353c-.111-.026-.157-.106-.161-.161a9.648 9.648 0 010-1.38c.004-.055.05-.135.16-.162l1.45-.351a1.833 1.833 0 001.278-1.173 6.95 6.95 0 01.249-.6 1.832 1.832 0 00-.074-1.734l-.776-1.274c-.06-.097-.036-.186 0-.228.302-.348.628-.674.976-.976.042-.036.13-.06.228 0l1.274.776a1.832 1.832 0 001.734.074 6.95 6.95 0 01.6-.249 1.833 1.833 0 001.172-1.277l.353-1.45c.026-.111.106-.157.161-.161z"/></svg>
+    <span class="nav-label">Settings</span>
+  </button>
 </nav>
 
 <div class="breadcrumb" id="breadcrumb">
@@ -705,6 +747,58 @@ textarea{resize:vertical;min-height:78px;}
 
 
 </div><!-- /view-piece -->
+
+<!-- ══ SETTINGS ══ -->
+<div id="view-settings" class="view">
+  <div class="section-title">Settings</div>
+  <div class="section-sub">Preferences are saved with your data on export.</div>
+
+  <div class="card">
+    <div class="settings-section-title">Appearance</div>
+
+    <div class="settings-row">
+      <div class="settings-row-info">
+        <div class="settings-row-label">Theme</div>
+        <div class="settings-row-sub">Changes how the app looks across all devices when you import your data</div>
+      </div>
+      <div class="mode-group">
+        <button class="mode-btn" id="theme-btn-light"     onclick="setTheme('light')">Light</button>
+        <button class="mode-btn" id="theme-btn-dark"      onclick="setTheme('dark')">Dark</button>
+        <button class="mode-btn" id="theme-btn-celestial" onclick="setTheme('celestial')">✦ Celestial</button>
+      </div>
+    </div>
+
+    <div class="settings-row">
+      <div class="settings-row-info">
+        <div class="settings-row-label">Navigation tabs</div>
+        <div class="settings-row-sub">Icons only shows a tooltip on hover</div>
+      </div>
+      <div class="mode-group">
+        <button class="mode-btn" id="tabmode-btn-text"  onclick="setTabMode('text')">Text</button>
+        <button class="mode-btn" id="tabmode-btn-both"  onclick="setTabMode('both')">
+          <svg width="14" height="14" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="9" cy="9" r="7"/><path d="M2 9h14"/></svg>
+          Text + Icons
+        </button>
+        <button class="mode-btn" id="tabmode-btn-icons" onclick="setTabMode('icons')">
+          <svg width="14" height="14" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="9" cy="9" r="7"/><path d="M2 9h14"/></svg>
+          Icons only
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="background:var(--page-warm)">
+    <div class="settings-section-title">Coming soon</div>
+    <div class="settings-row" style="opacity:.5;pointer-events:none">
+      <div class="settings-row-info">
+        <div class="settings-row-label">GitHub sync</div>
+        <div class="settings-row-sub">Save and load your data directly from your GitHub repository</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" disabled>Connect</button>
+    </div>
+  </div>
+</div>
+
 </div><!-- /main -->
 
 <!-- ══ PERSON MODAL ══ -->
@@ -939,7 +1033,7 @@ textarea{resize:vertical;min-height:78px;}
 //                     costBase,costBaseDate,costExtras:[{id,label,amount,date}],
 //                     costTip,costTipDate,posting:{siteId:{posted,date}}}]
 // ══════════════════════════════════════════════
-let state = { theme:'dark', people:[], linkSites:[], characters:[], sites:[], categories:[], pieces:[] };
+let state = { theme:'dark', tabMode:'text', people:[], linkSites:[], characters:[], sites:[], categories:[], pieces:[] };
 
 const STATUS_LABELS = {none:'Not Started',draft:'Draft',ready:'Ready',posted:'Fully Posted'};
 
@@ -1002,8 +1096,9 @@ const MIGRATIONS = {
       }));
       delete d.artists;
     }
-    // Ensure theme field
-    d.theme = d.theme || 'dark';
+    // Ensure theme and tabMode fields
+    d.theme   = d.theme   || 'dark';
+    d.tabMode = d.tabMode || 'text';
     d.linkSites   = d.linkSites   || [];
     d.characters  = d.characters  || [];
     d.sites       = d.sites       || [];
@@ -1052,20 +1147,21 @@ let moonObserver = null;
 function fitMoonStrip() {
   const el = document.getElementById('cel-moon-strip');
   if (!el || el.style.display === 'none') return;
-  // Reset to full, measure, then trim if needed
+  // Use window.innerWidth as fallback — clientWidth can read 0 in iOS standalone before layout
+  const availW = el.clientWidth || window.innerWidth;
   el.textContent = MOON_FULL;
-  if (el.scrollWidth <= el.clientWidth + 2) return;
+  if (el.scrollWidth <= availW + 2) return;
   el.textContent = MOON_SHORT;
-  if (el.scrollWidth <= el.clientWidth + 2) return;
+  if (el.scrollWidth <= availW + 2) return;
   el.textContent = MOON_MIN;
 }
 
 function setTheme(t) {
   state.theme = t;
   document.body.dataset.theme = t;
-  document.querySelectorAll('.theme-pill').forEach(b => b.classList.remove('active'));
-  const btn = document.getElementById('theme-'+t);
-  if (btn) btn.classList.add('active');
+  ['light','dark','celestial'].forEach(v => {
+    document.getElementById('theme-btn-'+v)?.classList.toggle('active', v===t);
+  });
   const cel = t === 'celestial';
   ['cel-corner-tl','cel-corner-tr','cel-corner-bl','cel-corner-br','cel-moon-strip']
     .forEach(id => {
@@ -1083,6 +1179,15 @@ function setTheme(t) {
     moonObserver.disconnect();
     moonObserver = null;
   }
+}
+
+function setTabMode(m) {
+  state.tabMode = m;
+  document.body.dataset.tabmode = m;
+  ['text','both','icons'].forEach(v => {
+    document.getElementById('tabmode-btn-'+v)?.classList.toggle('active', v===m);
+  });
+  setTimeout(updateNavFade, 50);
 }
 
 function exportData() {
@@ -1108,6 +1213,7 @@ async function importData(e) {
       state = {
         _version:   CURRENT_VERSION,
         theme:      d.theme || 'dark',
+        tabMode:    d.tabMode || 'text',
         people:     d.people,
         linkSites:  d.linkSites,
         characters: d.characters,
@@ -1116,6 +1222,7 @@ async function importData(e) {
         pieces:     d.pieces,
       };
       setTheme(state.theme);
+      setTabMode(state.tabMode);
       showView('library');
       const fromV = d._version < CURRENT_VERSION ? ` (migrated from v${d._version})` : '';
       toast('Imported!' + fromV);
@@ -1153,6 +1260,7 @@ function showView(name) {
   if (name==='tags')       renderCategories();
   if (name==='expenditure') renderExpenditure();
   if (name==='piece')      renderPiece();
+  // Settings view is static — no render needed
 }
 
 function showPieceTab(tab) {
@@ -1210,19 +1318,19 @@ function clearLibraryFilters() {
 }
 
 function populateLibraryFilterDropdowns() {
-  const repopulate = (elId, options, cur) => {
+  const repopulate = (elId, options) => {
     const el = document.getElementById(elId); if(!el) return;
-    el.innerHTML = options; el.value = cur;
+    const cur = el.value; // read BEFORE overwriting innerHTML
+    el.innerHTML = options;
+    el.value = cur; // restore whatever was selected
   };
   repopulate('lib-artist',
-    '<option value="">All artists</option>' + state.people.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join(''),
-    libFilters.artist);
+    '<option value="">All artists</option>' + state.people.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join(''));
   repopulate('lib-char',
-    '<option value="">All characters</option>' + state.characters.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join(''),
-    libFilters.char);
+    '<option value="">All characters</option>' + state.characters.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join(''));
   const siteOpts = '<option value="">Any</option>' + state.sites.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('');
-  repopulate('lib-site-posted',     siteOpts, libFilters.sitePosted);
-  repopulate('lib-site-not-posted', siteOpts, libFilters.siteNotPosted);
+  repopulate('lib-site-posted',     siteOpts);
+  repopulate('lib-site-not-posted', siteOpts);
   const allTags = new Set();
   state.pieces.forEach(p => {
     getCharTags(p).forEach(t=>allTags.add(t));
@@ -1230,8 +1338,7 @@ function populateLibraryFilterDropdowns() {
     (p.extraTags||[]).forEach(t=>allTags.add(t));
   });
   repopulate('lib-tag-select',
-    '<option value="">Add tag filter…</option>' + [...allTags].sort().map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join(''),
-    '');
+    '<option value="">Add tag filter…</option>' + [...allTags].sort().map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join(''));
 }
 
 function pieceTotal(p) {
@@ -2248,7 +2355,26 @@ function toast(msg){const el=document.getElementById('toast');el.textContent=msg
 // INIT
 // ══════════════════════════════════════════════
 setTheme(state.theme);
+setTabMode(state.tabMode);
 renderLibrary();
+// Re-fit moon strip after layout settles and on orientation change (iOS Safari quirk)
+window.addEventListener('load',          () => setTimeout(fitMoonStrip, 200));
+window.addEventListener('orientationchange', () => setTimeout(fitMoonStrip, 300));
+// Nav overflow indicator — only show fade when nav actually scrolls
+function updateNavFade() {
+  const nav = document.querySelector('.nav');
+  if (!nav) return;
+  const overflows = nav.scrollWidth > nav.clientWidth + 2;
+  nav.style.webkitMaskImage = overflows
+    ? 'linear-gradient(to right, black calc(100% - 32px), transparent 100%)'
+    : '';
+  nav.style.maskImage = overflows
+    ? 'linear-gradient(to right, black calc(100% - 32px), transparent 100%)'
+    : '';
+}
+window.addEventListener('load', updateNavFade);
+window.addEventListener('resize', updateNavFade);
+new ResizeObserver(updateNavFade).observe(document.querySelector('.nav') || document.body);
 </script>
 </body>
 </html>
