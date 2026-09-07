@@ -103,13 +103,30 @@ body[data-theme=celestial] .moon-strip{
   padding:7px 0 5px;border-top:1px solid rgba(201,168,76,.2);
   font-size:16px;opacity:.45;letter-spacing:4px;
   color:#c9a84c;pointer-events:none;user-select:none;
+  white-space:nowrap;overflow:hidden;
 }
 .celestial-corner,.moon-strip{display:none;}
 body[data-theme=celestial] .main{position:relative;}
 
 /* Celestial header glyph */
-body[data-theme=celestial] .app-header h1::before{content:'✦ ';font-size:.9em;opacity:.7;}
-body[data-theme=celestial] .app-header h1::after{content:' ☽';font-size:.85em;opacity:.6;}
+body[data-theme=celestial] .app-header h1::before{
+  content:'✦  ';
+  font-size:.7em;
+  opacity:.5;
+  letter-spacing:.05em;
+  vertical-align:middle;
+  position:relative;
+  top:-.05em;
+}
+body[data-theme=celestial] .app-header h1::after{
+  content:'  ☽';
+  font-size:.8em;
+  opacity:.5;
+  letter-spacing:.05em;
+  vertical-align:middle;
+  position:relative;
+  top:-.05em;
+}
 
 
 body{font-family:'Inter',sans-serif;background:var(--page);color:var(--ink);min-height:100vh;font-size:14px;line-height:1.5;}
@@ -1139,9 +1156,10 @@ function migrateData(d) {
   return d;
 }
 
-const MOON_FULL  = '🌑 · 🌒 · 🌓 · 🌔 · 🌕 · 🌖 · 🌗 · 🌘 · 🌑';
-const MOON_SHORT = '🌒 · 🌓 · 🌔 · 🌕 · 🌖 · 🌗 · 🌘';
-const MOON_MIN   = '🌑 · 🌕 · 🌑';
+const STAR = '<span style="font-size:8px;vertical-align:middle;opacity:.7">✦</span>';
+const MOON_FULL  = `🌒${STAR}🌓${STAR}🌔${STAR}🌕${STAR}🌖${STAR}🌗${STAR}🌘`;
+const MOON_SHORT = `🌓${STAR}🌔${STAR}🌕${STAR}🌖${STAR}🌗`;
+const MOON_MIN   = `🌔${STAR}🌕${STAR}🌖`;
 let moonObserver = null;
 
 function fitMoonStrip() {
@@ -1149,11 +1167,11 @@ function fitMoonStrip() {
   if (!el || el.style.display === 'none') return;
   // Use window.innerWidth as fallback — clientWidth can read 0 in iOS standalone before layout
   const availW = el.clientWidth || window.innerWidth;
-  el.textContent = MOON_FULL;
+  el.innerHTML = MOON_FULL;
   if (el.scrollWidth <= availW + 2) return;
-  el.textContent = MOON_SHORT;
+  el.innerHTML = MOON_SHORT;
   if (el.scrollWidth <= availW + 2) return;
-  el.textContent = MOON_MIN;
+  el.innerHTML = MOON_MIN;
 }
 
 function setTheme(t) {
