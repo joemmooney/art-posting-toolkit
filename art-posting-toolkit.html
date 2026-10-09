@@ -846,6 +846,9 @@ textarea{resize:vertical;min-height:78px;}
         <div class="field"><label>Password</label><input type="password" id="gh-pw" autocomplete="new-password"></div>
         <div class="field"><label>Confirm password</label><input type="password" id="gh-pw2" autocomplete="new-password"></div>
       </div>
+      <label class="row center" style="gap:8px;margin:2px 0 10px;text-transform:none;letter-spacing:0;font-size:12px;font-weight:500;color:var(--ink-soft);cursor:pointer">
+        <input type="checkbox" id="gh-remember" style="width:16px;height:16px;accent-color:var(--accent)"> Stay unlocked on this device for 24 hours
+      </label>
       <div class="settings-row-sub" style="margin-bottom:10px">Your data file is also encrypted with this password before upload, so it is safe in a public repo. There is no recovery if you forget it — keep an occasional Export as a backup.</div>
       <div class="row" style="gap:8px;justify-content:flex-end">
         <button class="btn btn-ok btn-sm" id="gh-connect-btn" onclick="ghConnect()">Connect</button>
@@ -856,6 +859,9 @@ textarea{resize:vertical;min-height:78px;}
     <div id="gh-locked" style="display:none">
       <div class="settings-row-sub" id="gh-locked-target" style="margin-bottom:10px"></div>
       <div class="field"><label>Password</label><input type="password" id="gh-unlock-pw" autocomplete="current-password" onkeydown="if(event.key==='Enter')ghUnlock()"></div>
+      <label class="row center" style="gap:8px;margin:2px 0 10px;text-transform:none;letter-spacing:0;font-size:12px;font-weight:500;color:var(--ink-soft);cursor:pointer">
+        <input type="checkbox" id="gh-unlock-remember" style="width:16px;height:16px;accent-color:var(--accent)"> Stay unlocked on this device for 24 hours
+      </label>
       <div class="row" style="gap:8px;justify-content:space-between">
         <button class="btn btn-danger btn-sm" onclick="ghDisconnect()">Disconnect</button>
         <button class="btn btn-ok btn-sm" id="gh-unlock-btn" onclick="ghUnlock()">Unlock</button>
@@ -2663,6 +2669,12 @@ let ghBusy  = false;
 let ghPw    = null;       // password — memory only, cleared on Lock
 let ghDataKey = null;     // {salt, key} cache so saves don't re-run PBKDF2
 const GH_DATA_FORMAT = 'apt-encrypted';
+// "Stay unlocked": token + password encrypted with a random NON-EXTRACTABLE AES key
+// kept in IndexedDB. Script can use the key but never read it out, and no
+// plaintext ever touches storage. The record self-destructs after GH_REMEMBER_MS.
+const GH_REMEMBER_MS = 24 * 60 * 60 * 1000;
+const GH_IDB_NAME = 'apt-github', GH_IDB_STORE = 'session';
+let ghSessionExpires = null;  // ms timestamp while a remembered session exists
 
 function ghGetStore() {
   try { return JSON.parse(localStorage.getItem(GH_STORE_KEY)) || null; }
@@ -2763,6 +2775,66 @@ function ghSetBusy(on, btnId, label) {
   }
 }
 
+// ── IndexedDB (tiny promise wrapper, single record) ──
+function ghIdb(mode, fn) {
+  return new Promise((resolve, reject) => {
+    if (!window.indexedDB) return reject(new Error('IndexedDB unavailable'));
+    const open = indexedDB.open(GH_IDB_NAME, 1);
+    open.onupgradeneeded = () => open.result.createObjectStore(GH_IDB_STORE);
+    open.onerror = () => reject(open.error);
+    open.onsuccess = () => {
+      const db = open.result;
+      const tx = db.transaction(GH_IDB_STORE, mode);
+      const req = fn(tx.objectStore(GH_IDB_STORE));
+      tx.oncomplete = () => { db.close(); resolve(req?.result); };
+      tx.onerror = tx.onabort = () => { db.close(); reject(tx.error); };
+    };
+  });
+}
+
+async function ghRememberSession() {
+  try {
+    const key = await crypto.subtle.generateKey({ name:'AES-GCM', length:256 }, false, ['encrypt','decrypt']);
+    const iv  = crypto.getRandomValues(new Uint8Array(12));
+    const ct  = await crypto.subtle.encrypt({ name:'AES-GCM', iv }, key,
+      new TextEncoder().encode(JSON.stringify({ token: ghToken, pw: ghPw })));
+    const expires = Date.now() + GH_REMEMBER_MS;
+    await ghIdb('readwrite', st => st.put({ key, iv, ct, expires }, 'current'));
+    ghSessionExpires = expires;
+  } catch(err) {
+    console.error(err);
+    ghSessionExpires = null;
+    toast('Couldn\u2019t remember the session on this device.');
+  }
+}
+async function ghForgetSession() {
+  ghSessionExpires = null;
+  try { await ghIdb('readwrite', st => st.delete('current')); } catch(e) { /* nothing stored */ }
+}
+// Called on startup: silently unlock if a non-expired session is stored
+async function ghRestoreSession() {
+  if (ghToken || !ghGetStore()?.sec || !ghCryptoOk()) return;
+  try {
+    const rec = await ghIdb('readonly', st => st.get('current'));
+    if (!rec) return;
+    if (!(rec.expires > Date.now())) { await ghForgetSession(); return; }
+    const pt = await crypto.subtle.decrypt({ name:'AES-GCM', iv:rec.iv }, rec.key, rec.ct);
+    const { token, pw } = JSON.parse(new TextDecoder().decode(pt));
+    ghToken = token; ghPw = pw; ghDataKey = null; ghSessionExpires = rec.expires;
+    renderGithubSync();
+  } catch(err) {
+    console.error(err);
+    await ghForgetSession();
+  }
+}
+// Shared by Connect and Unlock: remember (or not) per the ticked box
+async function ghApplyRemember(boxId) {
+  const remember = !!document.getElementById(boxId)?.checked;
+  const store = ghGetStore();
+  if (store) { store.remember = remember; ghSetStore(store); }
+  if (remember) await ghRememberSession(); else await ghForgetSession();
+}
+
 function renderGithubSync() {
   const store = ghGetStore();
   const show = id => ['gh-setup','gh-locked','gh-unlocked'].forEach(x => {
@@ -2775,12 +2847,14 @@ function renderGithubSync() {
     setVal('gh-repo',   c.repo   || '');
     setVal('gh-branch', c.branch || 'main');
     setVal('gh-path',   c.path   || 'data/art-toolkit-data.json');
+    const rb=document.getElementById('gh-remember'); if (rb) rb.checked = !!store?.remember;
     return;
   }
   const c = store.cfg, target = `${c.owner}/${c.repo} · ${c.branch} · ${c.path}`;
   if (!ghToken) {
     show('gh-locked');
     document.getElementById('gh-locked-target').textContent = 'Locked — ' + target;
+    const rb=document.getElementById('gh-unlock-remember'); if (rb) rb.checked = !!store.remember;
     return;
   }
   show('gh-unlocked');
@@ -2788,6 +2862,8 @@ function renderGithubSync() {
   document.getElementById('gh-status').textContent = store.lastSync
     ? `Last ${store.lastSync.action} on this device: ${new Date(store.lastSync.at).toLocaleString()}`
     : 'Unlocked — not synced on this device yet';
+  if (ghSessionExpires) document.getElementById('gh-status').textContent +=
+    ` · stays unlocked until ${new Date(ghSessionExpires).toLocaleString([], {weekday:'short', hour:'numeric', minute:'2-digit'})}`;
 }
 
 async function ghConnect() {
@@ -2812,6 +2888,7 @@ async function ghConnect() {
     const sec = await ghEncryptToken(token, pw);
     if (!ghSetStore({ cfg, sec, lastSync:null })) throw new Error('Could not write to local storage.');
     ghToken = token; ghPw = pw; ghSha = null; ghDataKey = null;
+    await ghApplyRemember('gh-remember');
     ['gh-token','gh-pw','gh-pw2'].forEach(id => setVal(id, ''));
     toast('Connected to GitHub!');
     renderGithubSync();
@@ -2831,6 +2908,7 @@ async function ghUnlock() {
     const token = await ghDecryptToken(store.sec, pw);
     if (!token) { toast('Wrong password.'); return; }
     ghToken = token; ghPw = pw; ghDataKey = null;
+    await ghApplyRemember('gh-unlock-remember');
     setVal('gh-unlock-pw', '');
     renderGithubSync();
     toast('Unlocked!');
@@ -2839,6 +2917,7 @@ async function ghUnlock() {
 
 function ghLock() {
   ghToken = null; ghPw = null; ghDataKey = null; ghSha = null;
+  ghForgetSession();
   renderGithubSync();
   toast('Locked.');
 }
@@ -2848,6 +2927,7 @@ async function ghDisconnect() {
   const store = ghGetStore();
   ghSetStore({ cfg: store?.cfg || {} }); // keep repo settings, drop secrets
   ghToken = null; ghPw = null; ghDataKey = null; ghSha = null;
+  await ghForgetSession();
   renderGithubSync();
   toast('Disconnected.');
 }
@@ -3007,6 +3087,7 @@ setTheme(state.theme);
 setTabMode(state.tabMode);
 renderLibrary();
 renderGithubSync();
+ghRestoreSession();
 // Re-fit moon strip after layout settles and on orientation change (iOS Safari quirk)
 window.addEventListener('load',          () => setTimeout(fitMoonStrip, 200));
 window.addEventListener('orientationchange', () => setTimeout(fitMoonStrip, 300));
