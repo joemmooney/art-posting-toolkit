@@ -2674,7 +2674,10 @@ const GH_DATA_FORMAT = 'apt-encrypted';
 // plaintext ever touches storage. The record self-destructs after GH_REMEMBER_MS.
 const GH_REMEMBER_MS = 24 * 60 * 60 * 1000;
 const GH_IDB_NAME = 'apt-github', GH_IDB_STORE = 'session';
-let ghSessionExpires = null;  // ms timestamp while a remembered session exists
+let ghSessionExpires = null;
+// Snapshot of the (empty) data at launch. Auto-load only runs while the data
+// still matches it, so work done before unlocking is never silently replaced.
+let ghLaunchSnapshot = null;  // ms timestamp while a remembered session exists
 
 function ghGetStore() {
   try { return JSON.parse(localStorage.getItem(GH_STORE_KEY)) || null; }
@@ -2822,6 +2825,7 @@ async function ghRestoreSession() {
     const { token, pw } = JSON.parse(new TextDecoder().decode(pt));
     ghToken = token; ghPw = pw; ghDataKey = null; ghSessionExpires = rec.expires;
     renderGithubSync();
+    await ghAutoLoad();
   } catch(err) {
     console.error(err);
     await ghForgetSession();
@@ -2896,6 +2900,7 @@ async function ghConnect() {
     console.error(err);
     toast(err.message || 'Connection failed.');
   } finally { ghSetBusy(false, 'gh-connect-btn'); }
+  await ghAutoLoad();
 }
 
 async function ghUnlock() {
@@ -2913,6 +2918,7 @@ async function ghUnlock() {
     renderGithubSync();
     toast('Unlocked!');
   } finally { ghSetBusy(false, 'gh-unlock-btn'); }
+  await ghAutoLoad();
 }
 
 function ghLock() {
@@ -3006,16 +3012,25 @@ async function ghSave() {
   } finally { ghSetBusy(false, 'gh-save-btn'); }
 }
 
-async function ghLoad() {
+// Load right after unlocking, but only if nothing has been changed since launch
+async function ghAutoLoad() {
+  if (!ghToken || ghLaunchSnapshot === null || serializeData() !== ghLaunchSnapshot) return;
+  await ghLoad(true);
+}
+
+async function ghLoad(auto=false) {
   if (ghBusy || !ghToken) return;
   const cfg = ghGetStore()?.cfg; if (!cfg) return;
-  if (!await ask('Load data from GitHub? Current data will be replaced.','Load')) return;
+  if (!auto && !await ask('Load data from GitHub? Current data will be replaced.','Load')) return;
   ghSetBusy(true, 'gh-load-btn', 'Loading…');
   try {
     const url = `${ghContentsPath(cfg)}?ref=${encodeURIComponent(cfg.branch)}`;
     // sha from the metadata call; content via the raw media type (works for files over 1 MB)
     const sha = await ghRemoteSha(cfg);
-    if (!sha) throw new Error('No data file on GitHub yet — save first.');
+    if (!sha) {
+      if (auto) return;   // nothing saved yet — stay quiet on launch
+      throw new Error('No data file on GitHub yet — save first.');
+    }
     const res = await ghFetch(url, { headers: { 'Accept': 'application/vnd.github.raw+json' } });
     if (!res.ok) throw new Error(await ghErrMsg(res));
     let d;
@@ -3027,6 +3042,9 @@ async function ghLoad() {
     ghSha = sha;
     ghRecordSync('load');
     renderGithubSync();
+    // Refresh whatever view is showing (a piece can't be open on an untouched launch)
+    const cur = document.querySelector('.view.active')?.id.replace('view-','');
+    if (cur && cur !== 'piece') showView(cur);
     const fromV = fromVersion < CURRENT_VERSION ? ` (migrated from v${fromVersion})` : '';
     toast('Loaded from GitHub!' + fromV);
   } catch(err) {
@@ -3087,6 +3105,7 @@ setTheme(state.theme);
 setTabMode(state.tabMode);
 renderLibrary();
 renderGithubSync();
+ghLaunchSnapshot = serializeData();
 ghRestoreSession();
 // Re-fit moon strip after layout settles and on orientation change (iOS Safari quirk)
 window.addEventListener('load',          () => setTimeout(fitMoonStrip, 200));
