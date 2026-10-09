@@ -246,6 +246,16 @@ textarea{resize:vertical;min-height:78px;}
 .cl-label{font-size:13px;color:var(--ink);cursor:pointer;line-height:1.4;}
 .cl-hint{display:block;color:var(--ink-faint);font-size:11px;margin-top:1px;}
 .checklist-item.done .cl-label{text-decoration:line-through;color:var(--ink-faint);}
+/* Image sets */
+.img-item{border:1px solid var(--rule);border-radius:var(--radius);padding:10px;margin-bottom:9px;background:var(--page);}
+.img-item:last-child{margin-bottom:0;}
+.img-num{font-size:11px;font-weight:700;color:var(--accent-dk);background:var(--accent-lt);border-radius:20px;padding:3px 9px;white-space:nowrap;flex-shrink:0;}
+.img-move{min-width:36px;padding-left:0;padding-right:0;justify-content:center;}
+.img-diff summary{cursor:pointer;font-size:12px;font-weight:600;color:var(--ink-soft);margin-top:9px;padding:4px 0;}
+.img-diff[open] summary{margin-bottom:8px;}
+.img-diff .sub-label{font-size:11px;font-weight:600;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.05em;margin:10px 0 5px;}
+.fmt-img-head{font-size:12px;font-weight:600;color:var(--ink-soft);margin:14px 0 6px;}
+.fmt-img-head:first-child{margin-top:0;}
 /* Image preview */
 .img-preview{width:100%;max-height:280px;object-fit:contain;border-radius:var(--radius);border:1px solid var(--rule);background:var(--page-warm);display:block;margin-top:9px;}
 /* Library filter bar */
@@ -634,15 +644,16 @@ textarea{resize:vertical;min-height:78px;}
         <div class="grow field"><label>Date Commissioned</label><input type="date" id="pi-date-commissioned" oninput="savePF('dateCommissioned',this.value)"></div>
         <div class="grow field"><label>Date Delivered</label><input type="date" id="pi-date-delivered" oninput="savePF('dateDelivered',this.value)"></div>
       </div>
-      <div class="field"><label>Original Post URL</label><input type="text" id="pi-orig-url" oninput="savePF('origUrl',this.value)"></div>
-      <div class="field" style="margin-bottom:0">
-        <label>Dropbox Image Link</label>
-        <input type="text" id="pi-dropbox" placeholder="Paste Dropbox share link" oninput="savePF('dropbox',this.value);updateImagePreview()">
-        <div id="img-preview-wrap" style="display:none;margin-top:9px">
-          <img id="img-preview" class="img-preview" alt="Preview" onerror="document.getElementById('img-preview-err').style.display='block';this.style.display='none'">
-          <div id="img-preview-err" style="display:none;font-size:12px;color:var(--warn);margin-top:6px">Could not load image — make sure the Dropbox link is set to "Anyone with link can view".</div>
-        </div>
+      <div class="field" style="margin-bottom:0"><label>Original Post URL</label><input type="text" id="pi-orig-url" oninput="savePF('origUrl',this.value)"></div>
+    </div>
+    <!-- Images (one or more, in order) -->
+    <div class="card">
+      <div class="row center" style="margin-bottom:10px">
+        <span style="font-weight:600;font-size:13px;flex:1">Images</span>
+        <button class="btn btn-ghost btn-sm" onclick="addPieceImage()">+ Add image</button>
       </div>
+      <div class="section-sub" id="pi-images-sub" style="margin-bottom:10px;display:none">Each image inherits the set's characters, tags and description. Open "Differences from set" to change them for one image.</div>
+      <div id="pi-images"></div>
     </div>
     <!-- Characters on this piece -->
     <div class="card">
@@ -721,8 +732,11 @@ textarea{resize:vertical;min-height:78px;}
       <div class="field" style="margin-bottom:0"><label>Artist Notes</label><textarea id="pi-artist-notes" placeholder="How the commission went…" style="min-height:65px" oninput="savePF('artistNotes',this.value);buildFormat()"></textarea></div>
     </div>
     <div class="site-tabs" id="formatter-site-tabs"></div>
-    <div class="output-box" id="formatter-output">Select a site tab above.</div>
-    <div class="copy-row"><button class="btn btn-ghost btn-sm" onclick="copyText('formatter-output')">Copy</button></div>
+    <div id="formatter-single">
+      <div class="output-box" id="formatter-output">Select a site tab above.</div>
+      <div class="copy-row"><button class="btn btn-ghost btn-sm" onclick="copyText('formatter-output')">Copy</button></div>
+    </div>
+    <div id="formatter-multi" style="display:none"></div>
     <!-- Per-site override -->
     <div id="override-section" style="display:none;margin-top:16px">
       <hr class="divider" style="margin-top:0">
@@ -931,6 +945,13 @@ textarea{resize:vertical;min-height:78px;}
       <button class="btn btn-ghost btn-sm" onclick="closeModal('site-modal')">✕</button>
     </div>
     <div class="field"><label>Site Name</label><input type="text" id="sm-name"></div>
+    <div class="field">
+      <label>Image sets</label>
+      <select id="sm-post-mode">
+        <option value="combined">One combined post (e.g. Telegram)</option>
+        <option value="separate">One post per image (e.g. DeviantArt)</option>
+      </select>
+    </div>
     <!-- Placeholder reference -->
     <div class="card" style="background:var(--page-warm);margin-bottom:12px">
       <label style="margin-bottom:6px">Placeholders — click to copy</label>
@@ -942,7 +963,11 @@ textarea{resize:vertical;min-height:78px;}
         <span class="ph-chip" onclick="copyRaw('{Tags}')">&#123;Tags&#125;</span>
         <span class="ph-chip" onclick="copyRaw('{Characters}')">&#123;Characters&#125;</span>
         <span class="ph-chip" onclick="copyRaw('{Artist.Name}')">&#123;Artist.Name&#125;</span>
+        <span class="ph-chip" onclick="copyRaw('{ImageNumber}')">&#123;ImageNumber&#125;</span>
+        <span class="ph-chip" onclick="copyRaw('{ImageCount}')">&#123;ImageCount&#125;</span>
+        <span class="ph-chip" onclick="copyRaw('{ImageLabel}')">&#123;ImageLabel&#125;</span>
       </div>
+      <p style="font-size:11px;color:var(--ink-faint);margin-top:6px">Image placeholders fill in per post on "one post per image" sites, and are blank in combined posts.</p>
       <p style="font-size:11px;color:var(--ink-faint);margin-top:6px">Artist links: <code>&#123;Artist.<b>SiteName</b>.URL&#125;</code> · <code>&#123;Artist.<b>SiteName</b>.Username&#125;</code></p>
       <p style="font-size:11px;color:var(--ink-faint);margin-top:3px">Character line: <code>&#123;Character.Name&#125;</code> · <code>&#123;Character.Owner.Name&#125;</code> · <code>&#123;Character.Owner.<b>SiteName</b>.URL&#125;</code></p>
     </div>
@@ -1098,11 +1123,14 @@ textarea{resize:vertical;min-height:78px;}
 // state.characters: [{id,name,ownerId,tags:[]}]
 // state.sites:      [{id,name,template,charTemplate}]  — posting sites
 // state.categories: [{id,name,tags[],collapsed}]
-// state.pieces:     [{id,title,postTitle,summary,personId,artistName,origUrl,dropbox,
+// state.pieces:     [{id,title,postTitle,summary,personId,artistName,origUrl,images:[IMAGE],
 //                     desc,artistNotes,status,checklist:{},
 //                     selectedCats:[],extraTags:[],removedCharTags:[],characterIds:[],
 //                     costBase,costBaseDate,costExtras:[{id,label,amount,date}],
 //                     costTip,costTipDate,posting:{siteId:{posted,date}}}]
+// IMAGE:            {id,label,dropbox,addCharIds:[],removeCharIds:[],addTags:[],removeTags:[],
+//                     descMode:'inherit'|'append'|'replace',desc}  — order = array order
+// state.sites[].postMode: 'combined' | 'separate' — how image sets are formatted
 // ══════════════════════════════════════════════
 let state = { theme:'dark', tabMode:'text', people:[], linkSites:[], characters:[], sites:[], categories:[], pieces:[] };
 
@@ -1125,20 +1153,22 @@ let cmTags         = [];
 // The migrate functions are cumulative — data always walks up through
 // every version it missed, so no version is ever skipped.
 // ══════════════════════════════════════════════
-const CURRENT_VERSION = 1;
+const CURRENT_VERSION = 2;
 
 // Default shapes — used both for new items and for back-filling missing fields
 const PIECE_DEFAULTS = () => ({
   id:'', title:'', postTitle:'', summary:'', personId:'', artistName:'',
   dateCommissioned:'', dateDelivered:'',
-  origUrl:'', dropbox:'', desc:'', artistNotes:'', status:'none',
+  origUrl:'', images:[], desc:'', artistNotes:'', status:'none',
   checklist:{}, selectedCats:[], extraTags:[], removedCharTags:[], characterIds:[],
   costBase:0, costBaseDate:'', costExtras:[], costTip:0, costTipDate:'',
   posting:{}, templateOverrides:{}
 });
+const IMAGE_DEFAULTS   = () => ({ id:'', label:'', dropbox:'', addCharIds:[], removeCharIds:[],
+                                  addTags:[], removeTags:[], descMode:'inherit', desc:'' });
 const PERSON_DEFAULTS  = () => ({ id:'', name:'', notes:'', links:[] });
 const CHAR_DEFAULTS    = () => ({ id:'', name:'', ownerId:'', tags:[] });
-const SITE_DEFAULTS    = () => ({ id:'', name:'', template:'', charTemplate:'' });
+const SITE_DEFAULTS    = () => ({ id:'', name:'', template:'', charTemplate:'', postMode:'combined' });
 const CATEGORY_DEFAULTS= () => ({ id:'', name:'', tags:[], collapsed:false });
 const LINKSITE_DEFAULTS= () => ({ id:'', name:'' });
 
@@ -1194,8 +1224,20 @@ const MIGRATIONS = {
       });
     });
   },
-  // Future example — increment CURRENT_VERSION to 2 and add:
-  // 2: (d) => { d.pieces.forEach(p => { p.newField = p.newField || 'default'; }); }
+  // Version 1 → 2: image sets. The piece's single Dropbox link becomes image 1;
+  // sites gain a postMode for how sets are formatted.
+  2: (d) => {
+    (d.pieces || []).forEach(p => {
+      if (!Array.isArray(p.images) || !p.images.length) {
+        p.images = [{ ...IMAGE_DEFAULTS(), id: uid(), dropbox: p.dropbox || '' }];
+      }
+      p.images.forEach(img => applyDefaults(img, IMAGE_DEFAULTS));
+      delete p.dropbox;
+    });
+    (d.sites || []).forEach(x => applyDefaults(x, SITE_DEFAULTS));
+  },
+  // Future example — increment CURRENT_VERSION to 3 and add:
+  // 3: (d) => { d.pieces.forEach(p => { p.newField = p.newField || 'default'; }); }
 };
 
 function migrateData(d) {
@@ -1322,8 +1364,13 @@ async function importData(e) {
 // This catches any piece that was created before a new field was added,
 // without requiring a re-import.
 function ensurePieceDefaults(p) {
-  return applyDefaults(p, PIECE_DEFAULTS);
+  applyDefaults(p, PIECE_DEFAULTS);
+  if (!p.images.length) p.images.push(newImage(p.dropbox || ''));
+  if ('dropbox' in p) delete p.dropbox;
+  p.images.forEach(img => applyDefaults(img, IMAGE_DEFAULTS));
+  return p;
 }
+function newImage(dropbox='') { return { ...IMAGE_DEFAULTS(), id: uid(), dropbox }; }
 
 // ══════════════════════════════════════════════
 // VIEW ROUTING
@@ -1432,11 +1479,48 @@ function pieceTotal(p) {
     (p.costExtras||[]).reduce((s,e)=>s+(parseFloat(e.amount)||0),0) +
     (parseFloat(p.costTip)||0);
 }
-function getPieceTags(p) {
+// Set-level (parent) tags: characters minus removed, categories, one-offs.
+// charIds lets an image swap in its own character list.
+function getSetTags(p, charIds) {
   const all = new Set();
-  getCharTags(p).filter(t=>!(p.removedCharTags||[]).includes(t)).forEach(t=>all.add(t));
+  getCharTags(p, charIds).filter(t=>!(p.removedCharTags||[]).includes(t)).forEach(t=>all.add(t));
   (p.selectedCats||[]).forEach(cid=>{const c=state.categories.find(x=>x.id===cid);if(c)c.tags.forEach(t=>all.add(t));});
   (p.extraTags||[]).forEach(t=>all.add(t));
+  return all;
+}
+
+// ── Image set resolution ──
+// A lone image always uses the set's values, so leftover differences on it never hide.
+function isImageSet(p) { return (p.images||[]).length > 1; }
+function imageCharIds(p, img) {
+  if (!isImageSet(p)) return [...(p.characterIds||[])];
+  const ids = (p.characterIds||[]).filter(id => !(img.removeCharIds||[]).includes(id));
+  (img.addCharIds||[]).forEach(id => { if (!ids.includes(id)) ids.push(id); });
+  return ids;
+}
+function imageTags(p, img) {
+  const all = getSetTags(p, imageCharIds(p, img));
+  if (!isImageSet(p)) return all;
+  (img.removeTags||[]).forEach(t => all.delete(t));
+  (img.addTags||[]).forEach(t => all.add(t));
+  return all;
+}
+function imageDesc(p, img) {
+  if (!isImageSet(p) || img.descMode === 'inherit') return p.desc || '';
+  if (img.descMode === 'replace') return img.desc || '';
+  return [p.desc, img.desc].filter(x => x && x.trim()).join('\n\n');
+}
+// Union across every image — used for filters, combined posts and rosters
+function pieceAllCharIds(p) {
+  const ids = [];
+  (p.images||[]).forEach(img => imageCharIds(p, img).forEach(id => { if (!ids.includes(id)) ids.push(id); }));
+  if (!(p.images||[]).length) (p.characterIds||[]).forEach(id => ids.push(id));
+  return ids;
+}
+function getPieceTags(p) {
+  if (!(p.images||[]).length) return getSetTags(p);
+  const all = new Set();
+  p.images.forEach(img => imageTags(p, img).forEach(t => all.add(t)));
   return all;
 }
 
@@ -1449,7 +1533,7 @@ function addPiece() {
     id:uid(), title:title||'(untitled)', postTitle:'', summary:'',
     personId:personId||'', artistName:person?person.name:'',
     dateCommissioned:'', dateDelivered:'',
-    origUrl:'', dropbox:'', desc:'', artistNotes:'',
+    origUrl:'', images:[newImage()], desc:'', artistNotes:'',
     status:'none', checklist:{}, selectedCats:[], extraTags:[],
     removedCharTags:[], characterIds:[],
     costBase:0, costBaseDate:'', costExtras:[], costTip:0, costTipDate:'',
@@ -1496,7 +1580,7 @@ function renderLibrary() {
   }
   if (libFilters.status)        items = items.filter(p => p.status === libFilters.status);
   if (libFilters.artist)        items = items.filter(p => p.personId === libFilters.artist);
-  if (libFilters.char)          items = items.filter(p => (p.characterIds||[]).includes(libFilters.char));
+  if (libFilters.char)          items = items.filter(p => pieceAllCharIds(p).includes(libFilters.char));
   if (libFilters.sitePosted)    items = items.filter(p => (p.posting||{})[libFilters.sitePosted]?.posted);
   if (libFilters.siteNotPosted) items = items.filter(p => !(p.posting||{})[libFilters.siteNotPosted]?.posted);
   if (libFilters.tags.length) {
@@ -1527,13 +1611,14 @@ function renderLibrary() {
     return;
   }
   el.innerHTML = items.map(item => {
-    const thumb   = dropboxDirect(item.dropbox);
+    const thumb   = dropboxDirect(item.images[0]?.dropbox);
     const thumbEl = thumb
       ? `<img class="lib-thumb" src="${esc(thumb)}" alt="" onerror="this.style.display='none'">`
       : `<div class="lib-thumb-ph">🖼</div>`;
     const meta = [
       item.artistName ? 'by ' + esc(item.artistName) : '',
       item.dateCommissioned ? '📅 ' + item.dateCommissioned : '',
+      isImageSet(item) ? item.images.length + ' images' : '',
     ].filter(Boolean).join('  ·  ');
     return `<div class="lib-card" onclick="openPiece('${item.id}')">
       ${thumbEl}
@@ -1568,12 +1653,11 @@ function renderPiece() {
   setVal('pi-date-delivered',     p.dateDelivered||'');
   setVal('pi-artist-name',        p.artistName);
   setVal('pi-orig-url',           p.origUrl);
-  setVal('pi-dropbox',            p.dropbox);
   setVal('pi-summary',            p.summary||'');
   setVal('pi-desc',               p.desc);
   setVal('pi-artist-notes',       p.artistNotes);
-  updateImagePreview();
   renderPieceCharSelector();
+  renderPieceImages();
 }
 function setPieceStatus(val) { const p=piece(); if(p) p.status=val; }
 
@@ -1601,16 +1685,139 @@ function dropboxDirect(url) {
   url = url.replace(/[?&]dl=0/, '').replace(/[?&]dl=1/, '');
   return url;
 }
-function updateImagePreview() {
+// ── Images (set) on Info tab ──
+let openImgPanels = new Set();   // image ids whose "Differences" panel is open (session only)
+
+function pieceImage(imgId) { return piece()?.images.find(i=>i.id===imgId) || null; }
+
+function renderPieceImages() {
   const p=piece(); if(!p) return;
-  const url=dropboxDirect(p.dropbox);
-  const wrap=document.getElementById('img-preview-wrap');
-  const img=document.getElementById('img-preview');
-  const err=document.getElementById('img-preview-err');
-  if (url) {
-    img.style.display='block'; err.style.display='none';
-    img.src=url; wrap.style.display='block';
-  } else { wrap.style.display='none'; img.src=''; }
+  const set=isImageSet(p), n=p.images.length;
+  document.getElementById('pi-images-sub').style.display = set ? '' : 'none';
+  document.getElementById('pi-images').innerHTML = p.images.map((img,i)=>{
+    const url=dropboxDirect(img.dropbox);
+    const head = set ? `
+      <div class="row center" style="gap:7px;margin-bottom:8px">
+        <span class="img-num">${i+1} of ${n}</span>
+        <input type="text" class="grow" value="${esc(img.label)}" placeholder="Label (e.g. Page ${i+1}, Alt)" oninput="saveImgField('${img.id}','label',this.value)">
+        <button class="btn btn-ghost btn-sm img-move" title="Move up"   ${i===0?'disabled':''}   onclick="moveImage('${img.id}',-1)">↑</button>
+        <button class="btn btn-ghost btn-sm img-move" title="Move down" ${i===n-1?'disabled':''} onclick="moveImage('${img.id}',1)">↓</button>
+        <button class="btn btn-danger btn-sm img-move" title="Remove image" onclick="removeImage('${img.id}')">✕</button>
+      </div>` : '';
+    return `<div class="img-item">
+      ${head}
+      <label>Dropbox Image Link</label>
+      <input type="text" value="${esc(img.dropbox)}" placeholder="Paste Dropbox share link" oninput="saveImgField('${img.id}','dropbox',this.value);updateImgPreview('${img.id}')">
+      <div id="imgprev-wrap-${img.id}" style="display:${url?'block':'none'}">
+        <img id="imgprev-${img.id}" class="img-preview" alt="Preview" ${url?`src="${esc(url)}"`:''} onerror="document.getElementById('imgprev-err-${img.id}').style.display='block';this.style.display='none'">
+        <div id="imgprev-err-${img.id}" style="display:none;font-size:12px;color:var(--warn);margin-top:6px">Could not load image — make sure the Dropbox link is set to "Anyone with link can view".</div>
+      </div>
+      ${set ? renderImgDiff(p,img) : ''}
+    </div>`;
+  }).join('');
+}
+
+function renderImgDiff(p, img) {
+  const effChars=imageCharIds(p,img);
+  const chars = state.characters.length ? state.characters.map(c=>`
+    <div class="char-select-row">
+      <input type="checkbox" id="ichar-${img.id}-${c.id}" ${effChars.includes(c.id)?'checked':''} onchange="toggleImgChar('${img.id}','${c.id}',this.checked)">
+      <label for="ichar-${img.id}-${c.id}" class="char-select-info" style="cursor:pointer"><div class="char-select-name">${esc(c.name)}</div></label>
+    </div>`).join('') : '<div style="font-size:12px;color:var(--ink-faint);font-style:italic">No characters yet.</div>';
+  // Tags: set tags (with this image's characters) can be struck out; additions are removable
+  const setTags=[...getSetTags(p, effChars)];
+  const tagChips = setTags.map(t=>{
+    const removed=(img.removeTags||[]).includes(t);
+    return `<span class="tag" style="${removed?'opacity:.4':''}">${esc(t)}<button class="remove" onclick="toggleImgTag('${img.id}','${esc(t)}')" title="${removed?'Re-add':'Remove for this image'}">${removed?'+':'×'}</button></span>`;
+  }).join('') + (img.addTags||[]).filter(t=>!setTags.includes(t)).map(t=>
+    `<span class="tag" style="outline:1px dashed var(--accent)">${esc(t)}<button class="remove" onclick="removeImgAddTag('${img.id}','${esc(t)}')" title="Remove">×</button></span>`).join('');
+  const final=[...imageTags(p,img)];
+  return `<details class="img-diff" ${openImgPanels.has(img.id)?'open':''} ontoggle="toggleImgPanel('${img.id}',this.open)">
+    <summary>Differences from set${imgDiffCount(img)?` (${imgDiffCount(img)})`:''}</summary>
+    <div class="sub-label">Characters</div>
+    ${chars}
+    <div class="sub-label">Tags</div>
+    <div class="tag-list">${tagChips||'<span style="font-size:12px;color:var(--ink-faint);font-style:italic">No set tags yet.</span>'}</div>
+    <div class="row" style="gap:7px;margin-top:7px">
+      <input type="text" id="imgtag-inp-${img.id}" class="grow" placeholder="Add tag for this image" onkeydown="if(event.key==='Enter')addImgTag('${img.id}')">
+      <button class="btn btn-ghost btn-sm" onclick="addImgTag('${img.id}')">+ Add</button>
+    </div>
+    <div style="font-size:11px;color:var(--ink-faint);margin-top:6px">Final: ${final.length?esc(final.join(', ')):'<i>none</i>'}</div>
+    <div class="sub-label">Description</div>
+    <select onchange="setImgDescMode('${img.id}',this.value)" style="margin-bottom:7px">
+      <option value="inherit" ${img.descMode==='inherit'?'selected':''}>Use set description</option>
+      <option value="append"  ${img.descMode==='append'?'selected':''}>Set description + extra text</option>
+      <option value="replace" ${img.descMode==='replace'?'selected':''}>Own description instead</option>
+    </select>
+    <textarea style="min-height:60px;display:${img.descMode==='inherit'?'none':'block'}" placeholder="${img.descMode==='append'?'Added after the set description…':'Description for this image…'}" oninput="saveImgField('${img.id}','desc',this.value)">${esc(img.desc)}</textarea>
+  </details>`;
+}
+function imgDiffCount(img) {
+  return (img.addCharIds||[]).length + (img.removeCharIds||[]).length +
+    (img.addTags||[]).length + (img.removeTags||[]).length + (img.descMode!=='inherit'?1:0);
+}
+function toggleImgPanel(imgId, open) { if (open) openImgPanels.add(imgId); else openImgPanels.delete(imgId); }
+
+function saveImgField(imgId, field, val) { const img=pieceImage(imgId); if(img) img[field]=val; }
+function updateImgPreview(imgId) {
+  const img=pieceImage(imgId); if(!img) return;
+  const url=dropboxDirect(img.dropbox);
+  const wrap=document.getElementById('imgprev-wrap-'+imgId);
+  const el=document.getElementById('imgprev-'+imgId);
+  document.getElementById('imgprev-err-'+imgId).style.display='none';
+  if (url) { el.style.display='block'; el.src=url; wrap.style.display='block'; }
+  else { wrap.style.display='none'; el.removeAttribute('src'); }
+}
+function addPieceImage() {
+  const p=piece(); if(!p) return;
+  p.images.push(newImage());
+  renderPieceImages();
+}
+function moveImage(imgId, dir) {
+  const p=piece(); if(!p) return;
+  const i=p.images.findIndex(x=>x.id===imgId), j=i+dir;
+  if (i<0 || j<0 || j>=p.images.length) return;
+  [p.images[i], p.images[j]] = [p.images[j], p.images[i]];
+  renderPieceImages();
+}
+async function removeImage(imgId) {
+  const p=piece(); if(!p || p.images.length<2) return;
+  const i=p.images.findIndex(x=>x.id===imgId);
+  if (!await ask(`Remove image ${i+1}${p.images[i].label?' ('+p.images[i].label+')':''}?`,'Remove')) return;
+  p.images.splice(i,1); openImgPanels.delete(imgId);
+  renderPieceImages();
+}
+function toggleImgChar(imgId, charId, checked) {
+  const p=piece(), img=pieceImage(imgId); if(!p||!img) return;
+  const inSet=(p.characterIds||[]).includes(charId);
+  img.addCharIds=(img.addCharIds||[]).filter(id=>id!==charId);
+  img.removeCharIds=(img.removeCharIds||[]).filter(id=>id!==charId);
+  if (inSet && !checked) img.removeCharIds.push(charId);
+  if (!inSet && checked) img.addCharIds.push(charId);
+  renderPieceImages();
+}
+function toggleImgTag(imgId, tag) {
+  const img=pieceImage(imgId); if(!img) return;
+  const idx=img.removeTags.indexOf(tag);
+  if (idx===-1) img.removeTags.push(tag); else img.removeTags.splice(idx,1);
+  renderPieceImages();
+}
+function addImgTag(imgId) {
+  const img=pieceImage(imgId); if(!img) return;
+  const tag=v('imgtag-inp-'+imgId).trim(); if(!tag) return;
+  img.removeTags=img.removeTags.filter(t=>t!==tag);   // re-adding a struck set tag just un-strikes it
+  if (!img.addTags.includes(tag)) img.addTags.push(tag);
+  renderPieceImages();
+}
+function removeImgAddTag(imgId, tag) {
+  const img=pieceImage(imgId); if(!img) return;
+  img.addTags=img.addTags.filter(t=>t!==tag);
+  renderPieceImages();
+}
+function setImgDescMode(imgId, mode) {
+  const img=pieceImage(imgId); if(!img) return;
+  img.descMode=mode;
+  renderPieceImages();
 }
 
 // ── Character selector on Info tab ──
@@ -1644,6 +1851,12 @@ function togglePieceChar(charId, checked) {
   } else {
     p.characterIds=p.characterIds.filter(id=>id!==charId);
   }
+  // An image can't both add and remove a character the set already has / lacks
+  p.images.forEach(img=>{
+    if (checked) img.addCharIds=img.addCharIds.filter(id=>id!==charId);
+    else         img.removeCharIds=img.removeCharIds.filter(id=>id!==charId);
+  });
+  if (isImageSet(p)) renderPieceImages();
 }
 
 // ── Tags ──
@@ -1677,9 +1890,9 @@ function renderPieceTags() {
   renderExtraTags(); updatePieceTagOutput();
 }
 
-function getCharTags(p) {
+function getCharTags(p, charIds) {
   const all=new Set();
-  (p.characterIds||[]).forEach(cid=>{
+  (charIds||p.characterIds||[]).forEach(cid=>{
     const c=state.characters.find(x=>x.id===cid);
     if (c) (c.tags||[]).forEach(t=>all.add(t));
   });
@@ -1719,14 +1932,7 @@ function renderExtraTags() {
 }
 function updatePieceTagOutput() {
   const p=piece(); if(!p) return;
-  const all=new Set();
-  // char tags minus removed
-  getCharTags(p).filter(t=>!(p.removedCharTags||[]).includes(t)).forEach(t=>all.add(t));
-  // category tags
-  (p.selectedCats||[]).forEach(cid=>{const c=state.categories.find(x=>x.id===cid);if(c)c.tags.forEach(t=>all.add(t));});
-  // extra tags
-  (p.extraTags||[]).forEach(t=>all.add(t));
-  const arr=[...all];
+  const arr=[...getSetTags(p)];
   document.getElementById('piece-tag-preview').innerHTML=arr.map(t=>`<span class="tag">${esc(t)}</span>`).join('');
   document.getElementById('piece-tag-output').textContent=arr.length?arr.join(', '):'Select categories or add characters to build your tag list.';
 }
@@ -1811,7 +2017,7 @@ function renderOverrideSection() {
   if (ov.charEnabled) setVal('override-char-tpl',ov.char||'');
   // Populate post placeholder chips with link site entries
   const phEl=document.getElementById('override-ph-post');
-  const phs=['{Title}','{Summary}','{Description}','{ArtistNotes}','{Tags}','{Characters}','{Artist.Name}'];
+  const phs=['{Title}','{Summary}','{Description}','{ArtistNotes}','{Tags}','{Characters}','{Artist.Name}','{ImageNumber}','{ImageCount}','{ImageLabel}'];
   let chips=phs.map(ph=>`<span class="ph-chip" onclick="copyRaw('${ph}')">${ph.replace(/\{/g,'&#123;').replace(/\}/g,'&#125;')}</span>`).join('');
   state.linkSites.forEach(ls=>{
     chips+=`<span class="ph-chip" onclick="copyRaw('{Artist.${ls.name}.URL}')">{Artist.${esc(ls.name)}.URL}</span>`;
@@ -1867,30 +2073,18 @@ function applyPersonPlaceholders(text, prefix, person) {
   return text;
 }
 
-function buildFormat() {
-  const p=piece(); if(!p) return;
-  const out=document.getElementById('formatter-output');
-  if (!currentSiteId) { out.textContent='No site selected.'; return; }
-  const site=state.sites.find(s=>s.id===currentSiteId);
-  if (!site||!site.template) { out.textContent='This site has no template yet — edit it in Sites.'; return; }
-
+// Render one post. ctx = {desc, tags:Set, charIds:[], number, count, label}
+function renderPostText(p, site, ov, ctx) {
   const artist=state.people.find(a=>a.id===p.personId);
-  const ov=(p.templateOverrides||{})[currentSiteId]||{};
-
-  // Build tag string
-  const allTags=new Set();
-  getCharTags(p).filter(t=>!(p.removedCharTags||[]).includes(t)).forEach(t=>allTags.add(t));
-  (p.selectedCats||[]).forEach(cid=>{const c=state.categories.find(x=>x.id===cid);if(c)c.tags.forEach(t=>allTags.add(t));});
-  (p.extraTags||[]).forEach(t=>allTags.add(t));
-  const tagsStr=[...allTags].join(', ');
+  const tagsStr=[...ctx.tags].join(', ');
 
   // Resolve character line template (override or global)
   const charTpl = (ov.charEnabled && ov.char) ? ov.char : site.charTemplate;
 
   // Build character lines
   let charsStr='';
-  if (charTpl && (p.characterIds||[]).length) {
-    charsStr=(p.characterIds||[]).map(cid=>{
+  if (charTpl && ctx.charIds.length) {
+    charsStr=ctx.charIds.map(cid=>{
       const char=state.characters.find(x=>x.id===cid); if(!char) return '';
       const owner=state.people.find(x=>x.id===char.ownerId);
       let line=charTpl;
@@ -1898,8 +2092,8 @@ function buildFormat() {
       line=applyPersonPlaceholders(line,'Character.Owner',owner);
       return line;
     }).filter(Boolean).join('\n');
-  } else if ((p.characterIds||[]).length) {
-    charsStr=(p.characterIds||[]).map(cid=>{
+  } else if (ctx.charIds.length) {
+    charsStr=ctx.charIds.map(cid=>{
       const char=state.characters.find(x=>x.id===cid); if(!char) return '';
       const owner=state.people.find(x=>x.id===char.ownerId);
       return char.name+(owner?' ('+owner.name+')':'');
@@ -1912,12 +2106,44 @@ function buildFormat() {
   let text=postTpl;
   text=text.replace(/\{Title\}/g,        p.postTitle||p.title||'')
            .replace(/\{Summary\}/g,       p.summary||'')
-           .replace(/\{Description\}/g,   p.desc||'')
+           .replace(/\{Description\}/g,   ctx.desc||'')
            .replace(/\{ArtistNotes\}/g,   p.artistNotes||'')
            .replace(/\{Tags\}/g,          tagsStr)
-           .replace(/\{Characters\}/g,    charsStr);
-  text=applyPersonPlaceholders(text,'Artist',artist);
-  out.textContent=text;
+           .replace(/\{Characters\}/g,    charsStr)
+           .replace(/\{ImageNumber\}/g,   ctx.number===''?'':String(ctx.number))
+           .replace(/\{ImageCount\}/g,    String(ctx.count))
+           .replace(/\{ImageLabel\}/g,    ctx.label||'');
+  return applyPersonPlaceholders(text,'Artist',artist);
+}
+
+function buildFormat() {
+  const p=piece(); if(!p) return;
+  const out=document.getElementById('formatter-output');
+  const single=document.getElementById('formatter-single');
+  const multi=document.getElementById('formatter-multi');
+  single.style.display=''; multi.style.display='none';
+  if (!currentSiteId) { out.textContent='No site selected.'; return; }
+  const site=state.sites.find(s=>s.id===currentSiteId);
+  if (!site||!site.template) { out.textContent='This site has no template yet — edit it in Sites.'; return; }
+
+  const ov=(p.templateOverrides||{})[currentSiteId]||{};
+  const n=p.images.length;
+
+  // One post per image on "separate" sites, when the piece is a set
+  if (isImageSet(p) && site.postMode==='separate') {
+    single.style.display='none'; multi.style.display='';
+    multi.innerHTML=p.images.map((img,i)=>`
+      <div class="fmt-img-head">Image ${i+1} of ${n}${img.label?' — '+esc(img.label):''}</div>
+      <div class="output-box" id="formatter-output-${i}">${esc(renderPostText(p,site,ov,{
+        desc:imageDesc(p,img), tags:imageTags(p,img), charIds:imageCharIds(p,img),
+        number:i+1, count:n, label:img.label }))}</div>
+      <div class="copy-row"><button class="btn btn-ghost btn-sm" onclick="copyText('formatter-output-${i}')">Copy</button></div>`).join('');
+    return;
+  }
+  // Combined post: set description, union of every image's tags and characters
+  out.textContent=renderPostText(p,site,ov,{
+    desc:p.desc||'', tags:getPieceTags(p), charIds:pieceAllCharIds(p),
+    number:n===1?1:'', count:n, label:n===1?p.images[0].label:'' });
 }
 
 // ── Posting ──
@@ -2043,7 +2269,7 @@ function renderCharacters() {
   if (!state.characters.length){el.innerHTML='<div class="empty">No characters yet.</div>';return;}
   el.innerHTML=state.characters.map(c=>{
     const owner=state.people.find(x=>x.id===c.ownerId);
-    const pieceCount=state.pieces.filter(p=>(p.characterIds||[]).includes(c.id)).length;
+    const pieceCount=state.pieces.filter(p=>pieceAllCharIds(ensurePieceDefaults(p)).includes(c.id)).length;
     return `<div class="roster-card" onclick="openCharModal('${c.id}')">
       <div class="row center">
         <div class="grow">
@@ -2067,7 +2293,7 @@ function openCharModal(id) {
   cmTags=JSON.parse(JSON.stringify(c.tags||[]));
   renderCharModalTags();
   // Pieces featuring this character
-  const pieces=state.pieces.filter(p=>(p.characterIds||[]).includes(id));
+  const pieces=state.pieces.filter(p=>pieceAllCharIds(ensurePieceDefaults(p)).includes(id));
   document.getElementById('cm-pieces').innerHTML=pieces.length
     ? pieces.map(p=>`<span class="piece-ref" onclick="closeModal('char-modal');openPiece('${p.id}')">${esc(p.title)}</span>`).join('')
     : '<span style="font-size:12px;color:var(--ink-faint);font-style:italic">None yet.</span>';
@@ -2093,7 +2319,13 @@ function saveCharModal() {
 async function deleteCharacter() {
   if(!await ask('Delete this character?'))return;
   state.characters=state.characters.filter(c=>c.id!==editCharId);
-  state.pieces.forEach(p=>{p.characterIds=(p.characterIds||[]).filter(id=>id!==editCharId);});
+  state.pieces.forEach(p=>{
+    p.characterIds=(p.characterIds||[]).filter(id=>id!==editCharId);
+    (p.images||[]).forEach(img=>{
+      img.addCharIds=(img.addCharIds||[]).filter(id=>id!==editCharId);
+      img.removeCharIds=(img.removeCharIds||[]).filter(id=>id!==editCharId);
+    });
+  });
   closeModal('char-modal'); renderCharacters();
 }
 
@@ -2102,7 +2334,7 @@ async function deleteCharacter() {
 // ══════════════════════════════════════════════
 function addSite() {
   const name=v('s-name').trim(); if(!name){toast('Site name required.');return;}
-  state.sites.push({id:uid(),name,template:'',charTemplate:''});
+  state.sites.push({id:uid(),name,template:'',charTemplate:'',postMode:'combined'});
   setVal('s-name',''); renderSites();
 }
 function renderSites() {
@@ -2125,6 +2357,7 @@ function openSiteModal(id) {
   editSiteId=id;
   const s=state.sites.find(x=>x.id===id); if(!s)return;
   setVal('sm-name',s.name); setVal('sm-template',s.template||''); setVal('sm-char-template',s.charTemplate||'');
+  setVal('sm-post-mode',s.postMode||'combined');
   openModal('site-modal');
 }
 function saveSiteModal() {
@@ -2132,6 +2365,7 @@ function saveSiteModal() {
   s.name=v('sm-name').trim()||s.name;
   s.template=v('sm-template');
   s.charTemplate=v('sm-char-template');
+  s.postMode=v('sm-post-mode')||'combined';
   closeModal('site-modal'); renderSites(); toast('Saved.');
 }
 async function deleteSite() {
@@ -2219,7 +2453,7 @@ function renderChart() {
   const charF  = v('exp-char');
   let pieces=state.pieces.filter(p=>{
     if(personF&&p.personId!==personF)return false;
-    if(charF&&!(p.characterIds||[]).includes(charF))return false;
+    if(charF&&!pieceAllCharIds(ensurePieceDefaults(p)).includes(charF))return false;
     return true;
   });
   const now=new Date();
@@ -2345,7 +2579,7 @@ function renderChart() {
   pieces.forEach(p => {
     const person = state.people.find(x=>x.id===p.personId);
     const artistName = p.artistName || (person?person.name:'');
-    const chars = (p.characterIds||[]).map(cid=>{const c=state.characters.find(x=>x.id===cid);return c?c.name:'';}).filter(Boolean).join(', ');
+    const chars = pieceAllCharIds(ensurePieceDefaults(p)).map(cid=>{const c=state.characters.find(x=>x.id===cid);return c?c.name:'';}).filter(Boolean).join(', ');
     const addEvent = (date, label, type, amount) => {
       const d = localDate(date);
       if (startDate && d < startDate) return;
