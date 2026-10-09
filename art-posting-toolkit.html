@@ -963,11 +963,12 @@ textarea{resize:vertical;min-height:78px;}
         <span class="ph-chip" onclick="copyRaw('{Tags}')">&#123;Tags&#125;</span>
         <span class="ph-chip" onclick="copyRaw('{Characters}')">&#123;Characters&#125;</span>
         <span class="ph-chip" onclick="copyRaw('{Artist.Name}')">&#123;Artist.Name&#125;</span>
+        <span class="ph-chip" onclick="copyRaw('{SourceURL}')">&#123;SourceURL&#125;</span>
         <span class="ph-chip" onclick="copyRaw('{ImageNumber}')">&#123;ImageNumber&#125;</span>
         <span class="ph-chip" onclick="copyRaw('{ImageCount}')">&#123;ImageCount&#125;</span>
         <span class="ph-chip" onclick="copyRaw('{ImageLabel}')">&#123;ImageLabel&#125;</span>
       </div>
-      <p style="font-size:11px;color:var(--ink-faint);margin-top:6px">Image placeholders fill in per post on "one post per image" sites, and are blank in combined posts.</p>
+      <p style="font-size:11px;color:var(--ink-faint);margin-top:6px">Image placeholders fill in per post on "one post per image" sites, and are blank in combined posts. <code>&#123;SourceURL&#125;</code> is each image's original post URL per image, and the set's URL in combined posts.</p>
       <p style="font-size:11px;color:var(--ink-faint);margin-top:6px">Artist links: <code>&#123;Artist.<b>SiteName</b>.URL&#125;</code> · <code>&#123;Artist.<b>SiteName</b>.Username&#125;</code></p>
       <p style="font-size:11px;color:var(--ink-faint);margin-top:3px">Character line: <code>&#123;Character.Name&#125;</code> · <code>&#123;Character.Owner.Name&#125;</code> · <code>&#123;Character.Owner.<b>SiteName</b>.URL&#125;</code></p>
     </div>
@@ -1128,7 +1129,7 @@ textarea{resize:vertical;min-height:78px;}
 //                     selectedCats:[],extraTags:[],removedCharTags:[],characterIds:[],
 //                     costBase,costBaseDate,costExtras:[{id,label,amount,date}],
 //                     costTip,costTipDate,posting:{siteId:{posted,date}}}]
-// IMAGE:            {id,label,dropbox,addCharIds:[],removeCharIds:[],addTags:[],removeTags:[],
+// IMAGE:            {id,label,dropbox,origUrl,addCharIds:[],removeCharIds:[],addTags:[],removeTags:[],
 //                     descMode:'inherit'|'append'|'replace',desc}  — order = array order
 // state.sites[].postMode: 'combined' | 'separate' — how image sets are formatted
 // ══════════════════════════════════════════════
@@ -1164,7 +1165,7 @@ const PIECE_DEFAULTS = () => ({
   costBase:0, costBaseDate:'', costExtras:[], costTip:0, costTipDate:'',
   posting:{}, templateOverrides:{}
 });
-const IMAGE_DEFAULTS   = () => ({ id:'', label:'', dropbox:'', addCharIds:[], removeCharIds:[],
+const IMAGE_DEFAULTS   = () => ({ id:'', label:'', dropbox:'', origUrl:'', addCharIds:[], removeCharIds:[],
                                   addTags:[], removeTags:[], descMode:'inherit', desc:'' });
 const PERSON_DEFAULTS  = () => ({ id:'', name:'', notes:'', links:[] });
 const CHAR_DEFAULTS    = () => ({ id:'', name:'', ownerId:'', tags:[] });
@@ -1505,6 +1506,9 @@ function imageTags(p, img) {
   (img.addTags||[]).forEach(t => all.add(t));
   return all;
 }
+function imageOrigUrl(p, img) {
+  return (isImageSet(p) && (img.origUrl||'').trim()) ? img.origUrl.trim() : (p.origUrl || '');
+}
 function imageDesc(p, img) {
   if (!isImageSet(p) || img.descMode === 'inherit') return p.desc || '';
   if (img.descMode === 'replace') return img.desc || '';
@@ -1712,6 +1716,8 @@ function renderPieceImages() {
         <img id="imgprev-${img.id}" class="img-preview" alt="Preview" ${url?`src="${esc(url)}"`:''} onerror="document.getElementById('imgprev-err-${img.id}').style.display='block';this.style.display='none'">
         <div id="imgprev-err-${img.id}" style="display:none;font-size:12px;color:var(--warn);margin-top:6px">Could not load image — make sure the Dropbox link is set to "Anyone with link can view".</div>
       </div>
+      ${set ? `<label style="margin-top:9px">Original Post URL</label>
+      <input type="text" value="${esc(img.origUrl)}" placeholder="${p.origUrl?'Blank uses the set\u2019s URL':'Where the artist posted this image'}" oninput="saveImgField('${img.id}','origUrl',this.value)">` : ''}
       ${set ? renderImgDiff(p,img) : ''}
     </div>`;
   }).join('');
@@ -2017,7 +2023,7 @@ function renderOverrideSection() {
   if (ov.charEnabled) setVal('override-char-tpl',ov.char||'');
   // Populate post placeholder chips with link site entries
   const phEl=document.getElementById('override-ph-post');
-  const phs=['{Title}','{Summary}','{Description}','{ArtistNotes}','{Tags}','{Characters}','{Artist.Name}','{ImageNumber}','{ImageCount}','{ImageLabel}'];
+  const phs=['{Title}','{Summary}','{Description}','{ArtistNotes}','{Tags}','{Characters}','{Artist.Name}','{SourceURL}','{ImageNumber}','{ImageCount}','{ImageLabel}'];
   let chips=phs.map(ph=>`<span class="ph-chip" onclick="copyRaw('${ph}')">${ph.replace(/\{/g,'&#123;').replace(/\}/g,'&#125;')}</span>`).join('');
   state.linkSites.forEach(ls=>{
     chips+=`<span class="ph-chip" onclick="copyRaw('{Artist.${ls.name}.URL}')">{Artist.${esc(ls.name)}.URL}</span>`;
@@ -2073,7 +2079,7 @@ function applyPersonPlaceholders(text, prefix, person) {
   return text;
 }
 
-// Render one post. ctx = {desc, tags:Set, charIds:[], number, count, label}
+// Render one post. ctx = {desc, tags:Set, charIds:[], number, count, label, sourceUrl}
 function renderPostText(p, site, ov, ctx) {
   const artist=state.people.find(a=>a.id===p.personId);
   const tagsStr=[...ctx.tags].join(', ');
@@ -2112,7 +2118,8 @@ function renderPostText(p, site, ov, ctx) {
            .replace(/\{Characters\}/g,    charsStr)
            .replace(/\{ImageNumber\}/g,   ctx.number===''?'':String(ctx.number))
            .replace(/\{ImageCount\}/g,    String(ctx.count))
-           .replace(/\{ImageLabel\}/g,    ctx.label||'');
+           .replace(/\{ImageLabel\}/g,    ctx.label||'')
+           .replace(/\{SourceURL\}/g,     ctx.sourceUrl||'');
   return applyPersonPlaceholders(text,'Artist',artist);
 }
 
@@ -2136,14 +2143,14 @@ function buildFormat() {
       <div class="fmt-img-head">Image ${i+1} of ${n}${img.label?' — '+esc(img.label):''}</div>
       <div class="output-box" id="formatter-output-${i}">${esc(renderPostText(p,site,ov,{
         desc:imageDesc(p,img), tags:imageTags(p,img), charIds:imageCharIds(p,img),
-        number:i+1, count:n, label:img.label }))}</div>
+        number:i+1, count:n, label:img.label, sourceUrl:imageOrigUrl(p,img) }))}</div>
       <div class="copy-row"><button class="btn btn-ghost btn-sm" onclick="copyText('formatter-output-${i}')">Copy</button></div>`).join('');
     return;
   }
   // Combined post: set description, union of every image's tags and characters
   out.textContent=renderPostText(p,site,ov,{
     desc:p.desc||'', tags:getPieceTags(p), charIds:pieceAllCharIds(p),
-    number:n===1?1:'', count:n, label:n===1?p.images[0].label:'' });
+    number:n===1?1:'', count:n, label:n===1?p.images[0].label:'', sourceUrl:p.origUrl||'' });
 }
 
 // ── Posting ──
