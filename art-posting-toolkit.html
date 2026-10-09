@@ -48,8 +48,8 @@ body[data-theme=celestial]{
 .modal-box,.confirm-box{background:var(--modal-bg);}
 .app-header{background:var(--header-bg);color:var(--header-text);}
 .breadcrumb{background:var(--card-bg);}
-input[type=text],input[type=number],input[type=date],textarea,select{background:var(--page-warm);color:var(--ink);}
-input[type=text]:focus,input[type=number]:focus,input[type=date]:focus,textarea:focus,select:focus{background:var(--card-bg);color:var(--ink);}
+input[type=text],input[type=password],input[type=number],input[type=date],textarea,select{background:var(--page-warm);color:var(--ink);}
+input[type=text]:focus,input[type=password]:focus,input[type=number]:focus,input[type=date]:focus,textarea:focus,select:focus{background:var(--card-bg);color:var(--ink);}
 
 /* Celestial atmosphere */
 body[data-theme=celestial]{
@@ -157,6 +157,8 @@ body[data-tabmode=icons] .nav-btn:hover::after{opacity:1;}
 .settings-section-title{font-size:11px;font-weight:600;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--rule);}
 .settings-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--page-warm);}
 .settings-row:last-child{border-bottom:none;}
+.gh-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 12px;}
+@media(max-width:600px){.gh-grid{grid-template-columns:1fr;}}
 .settings-row-info{flex:1;}
 .settings-row-label{font-size:13px;font-weight:500;}
 .settings-row-sub{font-size:11px;color:var(--ink-faint);margin-top:2px;}
@@ -183,8 +185,8 @@ body[data-tabmode=icons] .nav-btn:hover::after{opacity:1;}
 .section-sub{font-size:12px;color:var(--ink-faint);margin-bottom:16px;}
 .card{border:1px solid var(--rule);border-radius:var(--radius-lg);padding:16px;margin-bottom:11px;}
 label{display:block;font-size:11px;font-weight:600;color:var(--ink-soft);margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em;}
-input[type=text],input[type=number],input[type=date],textarea,select{width:100%;background:var(--page);border:1px solid var(--rule);border-radius:var(--radius);padding:7px 10px;font:400 13px 'Inter',sans-serif;color:var(--ink);transition:border-color .15s;outline:none;min-height:40px;}
-input[type=text]:focus,input[type=number]:focus,input[type=date]:focus,textarea:focus,select:focus{border-color:var(--accent);background:var(--card-bg);color:var(--ink);}
+input[type=text],input[type=password],input[type=number],input[type=date],textarea,select{width:100%;background:var(--page);border:1px solid var(--rule);border-radius:var(--radius);padding:7px 10px;font:400 13px 'Inter',sans-serif;color:var(--ink);transition:border-color .15s;outline:none;min-height:40px;}
+input[type=text]:focus,input[type=password]:focus,input[type=number]:focus,input[type=date]:focus,textarea:focus,select:focus{border-color:var(--accent);background:var(--card-bg);color:var(--ink);}
 textarea{resize:vertical;min-height:78px;}
 .field{margin-bottom:11px;}.field:last-child{margin-bottom:0;}
 .btn{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border-radius:var(--radius);font:500 13px 'Inter',sans-serif;cursor:pointer;border:none;transition:opacity .15s,transform .1s;min-height:40px;}
@@ -339,7 +341,7 @@ textarea{resize:vertical;min-height:78px;}
   .card{padding:12px;}
   .modal-box{padding:16px 13px;max-height:100vh;border-radius:0;width:100%;}
   .modal-overlay{padding:0;align-items:flex-end;}
-  input[type=text],input[type=number],input[type=date],textarea,select{font-size:16px;}
+  input[type=text],input[type=password],input[type=number],input[type=date],textarea,select{font-size:16px;}
   .row{flex-wrap:wrap;}
   .row>*{min-width:0;}
   .link-entry{flex-wrap:wrap;}
@@ -804,14 +806,57 @@ textarea{resize:vertical;min-height:78px;}
     </div>
   </div>
 
-  <div class="card" style="background:var(--page-warm)">
-    <div class="settings-section-title">Coming soon</div>
-    <div class="settings-row" style="opacity:.5;pointer-events:none">
-      <div class="settings-row-info">
-        <div class="settings-row-label">GitHub sync</div>
-        <div class="settings-row-sub">Save and load your data directly from your GitHub repository</div>
+  <div class="card">
+    <div class="settings-section-title">GitHub sync</div>
+
+    <!-- Not connected: setup form -->
+    <div id="gh-setup" style="display:none">
+      <div class="settings-row-sub" style="margin-bottom:12px">Save and load your data JSON directly to a GitHub repo. Use a fine-grained token scoped to that one repo with <b>Contents: Read and write</b> only. The token is encrypted with your password before it is stored on this device.</div>
+      <div class="gh-grid">
+        <div class="field"><label>Owner</label><input type="text" id="gh-owner" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="joemmooney"></div>
+        <div class="field"><label>Repository</label><input type="text" id="gh-repo" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="art-posting-toolkit"></div>
+        <div class="field"><label>Branch</label><input type="text" id="gh-branch" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="main"></div>
+        <div class="field"><label>File path</label><input type="text" id="gh-path" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="data/art-toolkit-data.json"></div>
       </div>
-      <button class="btn btn-ghost btn-sm" disabled>Connect</button>
+      <div class="field"><label>Personal access token</label><input type="password" id="gh-token" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="github_pat_…"></div>
+      <div class="gh-grid">
+        <div class="field"><label>Password</label><input type="password" id="gh-pw" autocomplete="new-password"></div>
+        <div class="field"><label>Confirm password</label><input type="password" id="gh-pw2" autocomplete="new-password"></div>
+      </div>
+      <div class="settings-row-sub" style="margin-bottom:10px">Your data file is also encrypted with this password before upload, so it is safe in a public repo. There is no recovery if you forget it — keep an occasional Export as a backup.</div>
+      <div class="row" style="gap:8px;justify-content:flex-end">
+        <button class="btn btn-ok btn-sm" id="gh-connect-btn" onclick="ghConnect()">Connect</button>
+      </div>
+    </div>
+
+    <!-- Connected but locked -->
+    <div id="gh-locked" style="display:none">
+      <div class="settings-row-sub" id="gh-locked-target" style="margin-bottom:10px"></div>
+      <div class="field"><label>Password</label><input type="password" id="gh-unlock-pw" autocomplete="current-password" onkeydown="if(event.key==='Enter')ghUnlock()"></div>
+      <div class="row" style="gap:8px;justify-content:space-between">
+        <button class="btn btn-danger btn-sm" onclick="ghDisconnect()">Disconnect</button>
+        <button class="btn btn-ok btn-sm" id="gh-unlock-btn" onclick="ghUnlock()">Unlock</button>
+      </div>
+    </div>
+
+    <!-- Unlocked -->
+    <div id="gh-unlocked" style="display:none">
+      <div class="settings-row">
+        <div class="settings-row-info">
+          <div class="settings-row-label" id="gh-target"></div>
+          <div class="settings-row-sub" id="gh-status"></div>
+        </div>
+      </div>
+      <div class="row" style="gap:8px;flex-wrap:wrap;justify-content:space-between;margin-top:10px">
+        <div class="row" style="gap:8px">
+          <button class="btn btn-ghost btn-sm" onclick="ghLock()">Lock</button>
+          <button class="btn btn-danger btn-sm" onclick="ghDisconnect()">Disconnect</button>
+        </div>
+        <div class="row" style="gap:8px">
+          <button class="btn btn-ghost btn-sm" id="gh-load-btn" onclick="ghLoad()">Load from GitHub</button>
+          <button class="btn btn-ok btn-sm" id="gh-save-btn" onclick="ghSave()">Save to GitHub</button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -1208,9 +1253,12 @@ function setTabMode(m) {
   setTimeout(updateNavFade, 50);
 }
 
+function serializeData() {
+  return JSON.stringify({ ...state, _version: CURRENT_VERSION }, null, 2);
+}
+
 function exportData() {
-  const export_state = { ...state, _version: CURRENT_VERSION };
-  const json = JSON.stringify(export_state, null, 2);
+  const json = serializeData();
   const a = Object.assign(document.createElement('a'), {
     href: URL.createObjectURL(new Blob([json],{type:'application/json'})),
     download: 'art-toolkit-data.json'
@@ -1219,30 +1267,39 @@ function exportData() {
   toast('Exported!');
 }
 
+// Validate, migrate and apply a parsed data object to state.
+// Shared by file import and GitHub load. Returns the pre-migration version.
+function applyLoadedData(d) {
+  if (!d || (!d.pieces && !d.queue && !d.artists)) throw new Error('Not a toolkit file');
+  const fromVersion = d._version || 0;
+  d = migrateData(d);
+  state = {
+    _version:   CURRENT_VERSION,
+    theme:      d.theme || 'dark',
+    tabMode:    d.tabMode || 'text',
+    people:     d.people,
+    linkSites:  d.linkSites,
+    characters: d.characters,
+    sites:      d.sites,
+    categories: d.categories,
+    pieces:     d.pieces,
+  };
+  setTheme(state.theme);
+  setTabMode(state.tabMode);
+  return fromVersion;
+}
+
 async function importData(e) {
   const file = e.target.files[0]; if (!file) return;
   const r = new FileReader();
   r.onload = async ev => {
     try {
-      let d = JSON.parse(ev.target.result);
+      const d = JSON.parse(ev.target.result);
       if (!d.pieces && !d.queue && !d.artists) throw new Error('Not a toolkit file');
       if (!await ask('Import data? Current data will be replaced.','Import')) return;
-      d = migrateData(d);
-      state = {
-        _version:   CURRENT_VERSION,
-        theme:      d.theme || 'dark',
-        tabMode:    d.tabMode || 'text',
-        people:     d.people,
-        linkSites:  d.linkSites,
-        characters: d.characters,
-        sites:      d.sites,
-        categories: d.categories,
-        pieces:     d.pieces,
-      };
-      setTheme(state.theme);
-      setTabMode(state.tabMode);
+      const fromVersion = applyLoadedData(d);
       showView('library');
-      const fromV = d._version < CURRENT_VERSION ? ` (migrated from v${d._version})` : '';
+      const fromV = fromVersion < CURRENT_VERSION ? ` (migrated from v${fromVersion})` : '';
       toast('Imported!' + fromV);
     } catch(err) {
       console.error(err);
@@ -1278,7 +1335,7 @@ function showView(name) {
   if (name==='tags')       renderCategories();
   if (name==='expenditure') renderExpenditure();
   if (name==='piece')      renderPiece();
-  // Settings view is static — no render needed
+  if (name==='settings')   renderGithubSync();
 }
 
 function showPieceTab(tab) {
@@ -2325,6 +2382,317 @@ function renderChart() {
 }
 
 // ══════════════════════════════════════════════
+// GITHUB SYNC
+// Config (owner/repo/branch/path) is stored in plain localStorage — not secret.
+// The PAT is encrypted with AES-GCM using a key derived from the user's password
+// (PBKDF2-SHA256). A separate salted PBKDF2 hash of the password is stored as a
+// quick UI gate; AES-GCM authentication is the real check. The decrypted token
+// lives only in memory (ghToken) and is gone on reload or Lock.
+// The data file itself is also encrypted (AES-GCM, same password, its own salt)
+// before upload, so only ciphertext ever reaches the repo. The password is held
+// in memory while unlocked so files saved from other devices can be decrypted.
+// ══════════════════════════════════════════════
+const GH_STORE_KEY  = 'apt-github-sync';
+const GH_ITERATIONS = 310000;
+let ghToken = null;       // plaintext token — memory only, never persisted
+let ghSha   = null;       // blob sha of the file as last loaded/saved
+let ghBusy  = false;
+let ghPw    = null;       // password — memory only, cleared on Lock
+let ghDataKey = null;     // {salt, key} cache so saves don't re-run PBKDF2
+const GH_DATA_FORMAT = 'apt-encrypted';
+
+function ghGetStore() {
+  try { return JSON.parse(localStorage.getItem(GH_STORE_KEY)) || null; }
+  catch(e) { return null; }
+}
+function ghSetStore(obj) {
+  try { localStorage.setItem(GH_STORE_KEY, JSON.stringify(obj)); return true; }
+  catch(e) { console.error(e); return false; }
+}
+
+// base64 <-> bytes (chunked so large data files don't blow the call stack on mobile)
+function bytesToB64(bytes) {
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += 0x8000)
+    bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  return btoa(bin);
+}
+function b64ToBytes(b64) {
+  const bin = atob(b64), out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
+function ghCryptoOk() {
+  return !!(window.isSecureContext && window.crypto && crypto.subtle);
+}
+
+async function ghPbkdf2Bits(password, salt) {
+  const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits({ name:'PBKDF2', hash:'SHA-256', salt, iterations:GH_ITERATIONS }, base, 256);
+  return new Uint8Array(bits);
+}
+async function ghAesKey(password, salt) {
+  const raw = await ghPbkdf2Bits(password, salt);
+  return crypto.subtle.importKey('raw', raw, { name:'AES-GCM' }, false, ['encrypt','decrypt']);
+}
+// Constant-time-ish comparison
+function ghBytesEqual(a, b) {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a[i] ^ b[i];
+  return diff === 0;
+}
+
+async function ghEncryptToken(token, password) {
+  const encSalt  = crypto.getRandomValues(new Uint8Array(16));
+  const hashSalt = crypto.getRandomValues(new Uint8Array(16));
+  const iv       = crypto.getRandomValues(new Uint8Array(12));
+  const key      = await ghAesKey(password, encSalt);
+  const ct       = new Uint8Array(await crypto.subtle.encrypt({ name:'AES-GCM', iv }, key, new TextEncoder().encode(token)));
+  const pwHash   = await ghPbkdf2Bits(password, hashSalt);
+  return {
+    encSalt: bytesToB64(encSalt), iv: bytesToB64(iv), ct: bytesToB64(ct),
+    hashSalt: bytesToB64(hashSalt), pwHash: bytesToB64(pwHash), iterations: GH_ITERATIONS
+  };
+}
+async function ghDecryptToken(sec, password) {
+  const hash = await ghPbkdf2Bits(password, b64ToBytes(sec.hashSalt));
+  if (!ghBytesEqual(hash, b64ToBytes(sec.pwHash))) return null;
+  try {
+    const key = await ghAesKey(password, b64ToBytes(sec.encSalt));
+    const pt  = await crypto.subtle.decrypt({ name:'AES-GCM', iv:b64ToBytes(sec.iv) }, key, b64ToBytes(sec.ct));
+    return new TextDecoder().decode(pt);
+  } catch(e) { return null; }
+}
+
+async function ghGetDataKey(saltB64) {
+  if (ghDataKey && ghDataKey.salt === saltB64) return ghDataKey.key;
+  const key = await ghAesKey(ghPw, b64ToBytes(saltB64));
+  ghDataKey = { salt: saltB64, key };
+  return key;
+}
+async function ghEncryptData(json) {
+  const salt = ghDataKey?.salt || bytesToB64(crypto.getRandomValues(new Uint8Array(16)));
+  const key  = await ghGetDataKey(salt);
+  const iv   = crypto.getRandomValues(new Uint8Array(12)); // fresh IV every save
+  const ct   = new Uint8Array(await crypto.subtle.encrypt({ name:'AES-GCM', iv }, key, new TextEncoder().encode(json)));
+  return JSON.stringify({ format: GH_DATA_FORMAT, v: 1, iterations: GH_ITERATIONS, salt, iv: bytesToB64(iv), ct: bytesToB64(ct) });
+}
+async function ghDecryptData(wrapper) {
+  if (wrapper.iterations && wrapper.iterations !== GH_ITERATIONS) throw new Error('Unsupported encryption settings.');
+  const key = await ghGetDataKey(wrapper.salt);
+  try {
+    const pt = await crypto.subtle.decrypt({ name:'AES-GCM', iv:b64ToBytes(wrapper.iv) }, key, b64ToBytes(wrapper.ct));
+    return new TextDecoder().decode(pt);
+  } catch(e) {
+    throw new Error('Couldn\u2019t decrypt — the file was saved with a different password.');
+  }
+}
+
+function ghSetBusy(on, btnId, label) {
+  ghBusy = on;
+  const btn = btnId && document.getElementById(btnId);
+  if (btn) {
+    if (on) { btn.dataset.label = btn.textContent; btn.textContent = label; }
+    else if (btn.dataset.label) btn.textContent = btn.dataset.label;
+    btn.disabled = on;
+  }
+}
+
+function renderGithubSync() {
+  const store = ghGetStore();
+  const show = id => ['gh-setup','gh-locked','gh-unlocked'].forEach(x => {
+    const el = document.getElementById(x); if (el) el.style.display = x===id ? '' : 'none';
+  });
+  if (!store || !store.sec) {
+    show('gh-setup');
+    const c = store?.cfg || {};
+    setVal('gh-owner',  c.owner  || 'joemmooney');
+    setVal('gh-repo',   c.repo   || '');
+    setVal('gh-branch', c.branch || 'main');
+    setVal('gh-path',   c.path   || 'data/art-toolkit-data.json');
+    return;
+  }
+  const c = store.cfg, target = `${c.owner}/${c.repo} · ${c.branch} · ${c.path}`;
+  if (!ghToken) {
+    show('gh-locked');
+    document.getElementById('gh-locked-target').textContent = 'Locked — ' + target;
+    return;
+  }
+  show('gh-unlocked');
+  document.getElementById('gh-target').textContent = target;
+  document.getElementById('gh-status').textContent = store.lastSync
+    ? `Last ${store.lastSync.action} on this device: ${new Date(store.lastSync.at).toLocaleString()}`
+    : 'Unlocked — not synced on this device yet';
+}
+
+async function ghConnect() {
+  if (ghBusy) return;
+  if (!ghCryptoOk()) { toast('Secure crypto unavailable — open the app over https.'); return; }
+  const cfg = {
+    owner:  v('gh-owner').trim(),
+    repo:   v('gh-repo').trim(),
+    branch: v('gh-branch').trim() || 'main',
+    path:   v('gh-path').trim().replace(/^\/+/, '')
+  };
+  const token = v('gh-token').trim(), pw = v('gh-pw'), pw2 = v('gh-pw2');
+  if (!cfg.owner || !cfg.repo || !cfg.path) { toast('Owner, repository and file path are required.'); return; }
+  if (!token)        { toast('Paste your access token.'); return; }
+  if (pw.length < 8) { toast('Password must be at least 8 characters.'); return; }
+  if (pw !== pw2)    { toast('Passwords don\u2019t match.'); return; }
+  ghSetBusy(true, 'gh-connect-btn', 'Checking…');
+  try {
+    // Verify the token can actually see the repo before storing anything
+    const res = await ghFetch(`/repos/${encodeURIComponent(cfg.owner)}/${encodeURIComponent(cfg.repo)}`, {}, token);
+    if (!res.ok) throw new Error(res.status===404 ? 'Repo not found or token lacks access.' : `GitHub error ${res.status}.`);
+    const sec = await ghEncryptToken(token, pw);
+    if (!ghSetStore({ cfg, sec, lastSync:null })) throw new Error('Could not write to local storage.');
+    ghToken = token; ghPw = pw; ghSha = null; ghDataKey = null;
+    ['gh-token','gh-pw','gh-pw2'].forEach(id => setVal(id, ''));
+    toast('Connected to GitHub!');
+    renderGithubSync();
+  } catch(err) {
+    console.error(err);
+    toast(err.message || 'Connection failed.');
+  } finally { ghSetBusy(false, 'gh-connect-btn'); }
+}
+
+async function ghUnlock() {
+  if (ghBusy) return;
+  const store = ghGetStore(); if (!store?.sec) return renderGithubSync();
+  if (!ghCryptoOk()) { toast('Secure crypto unavailable — open the app over https.'); return; }
+  const pw = v('gh-unlock-pw'); if (!pw) return;
+  ghSetBusy(true, 'gh-unlock-btn', 'Unlocking…');
+  try {
+    const token = await ghDecryptToken(store.sec, pw);
+    if (!token) { toast('Wrong password.'); return; }
+    ghToken = token; ghPw = pw; ghDataKey = null;
+    setVal('gh-unlock-pw', '');
+    renderGithubSync();
+    toast('Unlocked!');
+  } finally { ghSetBusy(false, 'gh-unlock-btn'); }
+}
+
+function ghLock() {
+  ghToken = null; ghPw = null; ghDataKey = null; ghSha = null;
+  renderGithubSync();
+  toast('Locked.');
+}
+
+async function ghDisconnect() {
+  if (!await ask('Disconnect GitHub? The encrypted token is removed from this device. Data in the repo is untouched.','Disconnect')) return;
+  const store = ghGetStore();
+  ghSetStore({ cfg: store?.cfg || {} }); // keep repo settings, drop secrets
+  ghToken = null; ghPw = null; ghDataKey = null; ghSha = null;
+  renderGithubSync();
+  toast('Disconnected.');
+}
+
+function ghFetch(path, opts={}, token=ghToken) {
+  return fetch('https://api.github.com' + path, {
+    ...opts,
+    cache: 'no-store',
+    headers: {
+      'Accept': 'application/vnd.github+json',
+      'Authorization': 'Bearer ' + token,
+      'X-GitHub-Api-Version': '2022-11-28',
+      ...(opts.headers || {})
+    }
+  });
+}
+function ghContentsPath(cfg) {
+  return `/repos/${encodeURIComponent(cfg.owner)}/${encodeURIComponent(cfg.repo)}/contents/` +
+    cfg.path.split('/').map(encodeURIComponent).join('/');
+}
+async function ghErrMsg(res) {
+  if (res.status === 401) return 'Token rejected — it may have expired.';
+  if (res.status === 403) return 'Permission denied — token needs Contents: Read and write.';
+  if (res.status === 404) return 'File or repo not found.';
+  if (res.status === 409) return 'Conflict — file changed on GitHub. Try again.';
+  try { const j = await res.json(); return j.message || `GitHub error ${res.status}.`; }
+  catch(e) { return `GitHub error ${res.status}.`; }
+}
+// Returns current remote sha, or null if the file doesn't exist yet
+async function ghRemoteSha(cfg) {
+  const res = await ghFetch(`${ghContentsPath(cfg)}?ref=${encodeURIComponent(cfg.branch)}`);
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(await ghErrMsg(res));
+  const j = await res.json();
+  return j.sha || null;
+}
+function ghRecordSync(action) {
+  const store = ghGetStore(); if (!store) return;
+  store.lastSync = { action, at: Date.now() };
+  ghSetStore(store);
+}
+
+async function ghSave() {
+  if (ghBusy || !ghToken) return;
+  const cfg = ghGetStore()?.cfg; if (!cfg) return;
+  ghSetBusy(true, 'gh-save-btn', 'Saving…');
+  try {
+    const remoteSha = await ghRemoteSha(cfg);
+    // Guard against clobbering a save made from another device
+    if (remoteSha && remoteSha !== ghSha) {
+      const msg = ghSha
+        ? 'The file on GitHub has changed since you last loaded it (maybe from another device). Overwrite it?'
+        : 'A data file already exists on GitHub and you haven\u2019t loaded it this session. Overwrite it?';
+      if (!await ask(msg, 'Overwrite')) return;
+    }
+    const body = {
+      message: `Update art toolkit data (${new Date().toISOString().slice(0,16).replace('T',' ')})`,
+      content: bytesToB64(new TextEncoder().encode(await ghEncryptData(serializeData()))),
+      branch:  cfg.branch
+    };
+    if (remoteSha) body.sha = remoteSha;
+    const res = await ghFetch(ghContentsPath(cfg), {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (!res.ok) throw new Error(await ghErrMsg(res));
+    const j = await res.json();
+    ghSha = j.content?.sha || null;
+    ghRecordSync('save');
+    renderGithubSync();
+    toast('Saved to GitHub!');
+  } catch(err) {
+    console.error(err);
+    toast(err.message || 'Save failed.');
+  } finally { ghSetBusy(false, 'gh-save-btn'); }
+}
+
+async function ghLoad() {
+  if (ghBusy || !ghToken) return;
+  const cfg = ghGetStore()?.cfg; if (!cfg) return;
+  if (!await ask('Load data from GitHub? Current data will be replaced.','Load')) return;
+  ghSetBusy(true, 'gh-load-btn', 'Loading…');
+  try {
+    const url = `${ghContentsPath(cfg)}?ref=${encodeURIComponent(cfg.branch)}`;
+    // sha from the metadata call; content via the raw media type (works for files over 1 MB)
+    const sha = await ghRemoteSha(cfg);
+    if (!sha) throw new Error('No data file on GitHub yet — save first.');
+    const res = await ghFetch(url, { headers: { 'Accept': 'application/vnd.github.raw+json' } });
+    if (!res.ok) throw new Error(await ghErrMsg(res));
+    let d;
+    try { d = JSON.parse(await res.text()); }
+    catch(e) { throw new Error('File on GitHub isn\u2019t valid JSON.'); }
+    // Encrypted wrapper → decrypt; a plain (legacy) file still loads and is encrypted on next save
+    if (d && d.format === GH_DATA_FORMAT) d = JSON.parse(await ghDecryptData(d));
+    const fromVersion = applyLoadedData(d);
+    ghSha = sha;
+    ghRecordSync('load');
+    renderGithubSync();
+    const fromV = fromVersion < CURRENT_VERSION ? ` (migrated from v${fromVersion})` : '';
+    toast('Loaded from GitHub!' + fromV);
+  } catch(err) {
+    console.error(err);
+    toast(err.message === 'Not a toolkit file' ? 'Load failed — not a valid toolkit file.' : (err.message || 'Load failed.'));
+  } finally { ghSetBusy(false, 'gh-load-btn'); }
+}
+
+// ══════════════════════════════════════════════
 // UTILS
 // ══════════════════════════════════════════════
 // Custom async confirm (replaces blocked window.confirm in iframes)
@@ -2375,6 +2743,7 @@ function toast(msg){const el=document.getElementById('toast');el.textContent=msg
 setTheme(state.theme);
 setTabMode(state.tabMode);
 renderLibrary();
+renderGithubSync();
 // Re-fit moon strip after layout settles and on orientation change (iOS Safari quirk)
 window.addEventListener('load',          () => setTimeout(fitMoonStrip, 200));
 window.addEventListener('orientationchange', () => setTimeout(fitMoonStrip, 300));
