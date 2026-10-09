@@ -490,6 +490,7 @@ textarea{resize:vertical;min-height:78px;}
         <option value="title-az">Title A→Z</option>
         <option value="title-za">Title Z→A</option>
         <option value="artist-az">Artist A→Z</option>
+        <option value="artist-za">Artist Z→A</option>
         <option value="date-commissioned-new">Date Commissioned (newest)</option>
         <option value="date-commissioned-old">Date Commissioned (oldest)</option>
         <option value="date-delivered-new">Date Delivered (newest)</option>
@@ -497,6 +498,14 @@ textarea{resize:vertical;min-height:78px;}
         <option value="cost-high">Total Cost (high→low)</option>
         <option value="cost-low">Total Cost (low→high)</option>
         <option value="status">Status (workflow order)</option>
+      </select>
+      <span class="sort-label">Then by</span>
+      <select id="lib-sort-second" onchange="renderLibrary()" style="width:auto;min-width:130px;min-height:32px;font-size:12px;">
+        <option value="title-az">Title A→Z</option>
+        <option value="title-za">Title Z→A</option>
+        <option value="artist-az">Artist A→Z</option>
+        <option value="artist-za">Artist Z→A</option>
+        <option value="default">Added order</option>
       </select>
       <button class="btn btn-ghost btn-sm" onclick="clearLibraryFilters()" style="margin-left:auto">Clear All</button>
     </div>
@@ -1363,7 +1372,7 @@ function closeModal(id,e) {
 const libFilters = {
   search:'', status:'', artist:'', char:'',
   sitePosted:'', siteNotPosted:'',
-  tags:[], tagMode:'or', sort:'default'
+  tags:[], tagMode:'or', sort:'default', sort2:'title-az'
 };
 
 function setTagMode(mode) {
@@ -1386,9 +1395,10 @@ function renderTagChips() {
 function clearLibraryFilters() {
   libFilters.search=''; libFilters.status=''; libFilters.artist='';
   libFilters.char=''; libFilters.sitePosted=''; libFilters.siteNotPosted='';
-  libFilters.tags=[]; libFilters.tagMode='or'; libFilters.sort='default';
+  libFilters.tags=[]; libFilters.tagMode='or'; libFilters.sort='default'; libFilters.sort2='title-az';
   ['lib-search','lib-status','lib-artist','lib-char','lib-site-posted','lib-site-not-posted','lib-tag-select'].forEach(id=>setVal(id,''));
   setVal('lib-sort-field','default');
+  setVal('lib-sort-second','title-az');
   setTagMode('or'); renderTagChips(); renderLibrary();
 }
 
@@ -1452,6 +1462,21 @@ function addPiece() {
 const STATUS_ORDER = {none:0,draft:1,ready:2,posted:3};
 function setFilter(f) { libFilters.status=f; setVal('lib-status',f); renderLibrary(); }
 
+// Comparators for library sorting — 'default' (added order) has none
+const LIB_SORTS = {
+  'title-az':              (a,b)=>(a.title||'').localeCompare(b.title||''),
+  'title-za':              (a,b)=>(b.title||'').localeCompare(a.title||''),
+  'artist-az':             (a,b)=>(a.artistName||'').localeCompare(b.artistName||''),
+  'artist-za':             (a,b)=>(b.artistName||'').localeCompare(a.artistName||''),
+  'date-commissioned-new': (a,b)=>(b.dateCommissioned||'').localeCompare(a.dateCommissioned||''),
+  'date-commissioned-old': (a,b)=>(a.dateCommissioned||'').localeCompare(b.dateCommissioned||''),
+  'date-delivered-new':    (a,b)=>(b.dateDelivered||'').localeCompare(a.dateDelivered||''),
+  'date-delivered-old':    (a,b)=>(a.dateDelivered||'').localeCompare(b.dateDelivered||''),
+  'cost-high':             (a,b)=>(pieceTotal(b)||0)-(pieceTotal(a)||0),
+  'cost-low':              (a,b)=>(pieceTotal(a)||0)-(pieceTotal(b)||0),
+  'status':                (a,b)=>(STATUS_ORDER[a.status]||0)-(STATUS_ORDER[b.status]||0),
+};
+
 function renderLibrary() {
   populateLibraryFilterDropdowns();
   libFilters.search        = v('lib-search').toLowerCase();
@@ -1461,6 +1486,7 @@ function renderLibrary() {
   libFilters.sitePosted    = v('lib-site-posted');
   libFilters.siteNotPosted = v('lib-site-not-posted');
   libFilters.sort          = v('lib-sort-field');
+  libFilters.sort2         = v('lib-sort-second') || 'title-az';
 
   let items = state.pieces.map(ensurePieceDefaults);
 
@@ -1482,17 +1508,13 @@ function renderLibrary() {
     });
   }
 
-  const s = libFilters.sort;
-  if (s==='title-az')             items.sort((a,b)=>(a.title||'').localeCompare(b.title||''));
-  if (s==='title-za')             items.sort((a,b)=>(b.title||'').localeCompare(a.title||''));
-  if (s==='artist-az')            items.sort((a,b)=>(a.artistName||'').localeCompare(b.artistName||''));
-  if (s==='date-commissioned-new') items.sort((a,b)=>(b.dateCommissioned||'').localeCompare(a.dateCommissioned||''));
-  if (s==='date-commissioned-old') items.sort((a,b)=>(a.dateCommissioned||'').localeCompare(b.dateCommissioned||''));
-  if (s==='date-delivered-new')   items.sort((a,b)=>(b.dateDelivered||'').localeCompare(a.dateDelivered||''));
-  if (s==='date-delivered-old')   items.sort((a,b)=>(a.dateDelivered||'').localeCompare(b.dateDelivered||''));
-  if (s==='cost-high')            items.sort((a,b)=>(pieceTotal(b)||0)-(pieceTotal(a)||0));
-  if (s==='cost-low')             items.sort((a,b)=>(pieceTotal(a)||0)-(pieceTotal(b)||0));
-  if (s==='status')               items.sort((a,b)=>(STATUS_ORDER[a.status]||0)-(STATUS_ORDER[b.status]||0));
+  // Primary sort, then the chosen "Then by" for ties. Array.sort is stable,
+  // so anything still tied keeps added order.
+  const primary = LIB_SORTS[libFilters.sort];
+  const second  = LIB_SORTS[libFilters.sort2];
+  if (primary) items.sort((a,b) => (primary?primary(a,b):0) || (second?second(a,b):0));
+  const secondSel = document.getElementById('lib-sort-second');
+  if (secondSel) secondSel.disabled = !primary;
 
   const total = state.pieces.length;
   document.getElementById('lib-result-count').textContent = items.length === total
